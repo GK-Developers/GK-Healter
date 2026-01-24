@@ -1,0 +1,208 @@
+import os
+import gi
+import threading
+from typing import List, Dict, Any, Optional
+
+gi.require_version('Gtk', '3.0')
+from gi.repository import Gtk, GLib, Gdk
+
+from src.cleaner import SystemCleaner
+
+class MainWindow(Gtk.Window):
+    """
+    Main application window for the Pardus System Cleaner.
+    Handles UI events, signal connections, and interacts with the SystemCleaner logic.
+    """
+    def __init__(self) -> None:
+        """
+        Initializes the MainWindow by loading the UI from XML and connecting signals.
+        """
+        # We don't call super() init here because we are loading from XML
+        # Instead, we pull the window object from the builder.
+        
+        self.cleaner: SystemCleaner = SystemCleaner()
+        self.scan_data: List[Dict[str, Any]] = []
+
+        # Load XML
+        builder = Gtk.Builder()
+        ui_path = os.path.join(os.path.dirname(__file__), "../resources/main_window.ui")
+        builder.add_from_file(ui_path)
+
+        # Get Main Window
+        self.window: Gtk.Window = builder.get_object("main_window")
+        self.window.connect("destroy", Gtk.main_quit)
+        
+        # Get Objects
+        self.info_bar: Gtk.InfoBar = builder.get_object("info_bar")
+        self.info_label: Gtk.Label = builder.get_object("info_label")
+        self.treeview: Gtk.TreeView = builder.get_object("treeview")
+        self.store: Gtk.ListStore = builder.get_object("file_list_store")
+        self.summary_label: Gtk.Label = builder.get_object("summary_label")
+        self.btn_scan: Gtk.Button = builder.get_object("btn_scan")
+        self.btn_clean: Gtk.Button = builder.get_object("btn_clean")
+        self.btn_about: Gtk.Button = builder.get_object("btn_about")
+
+        # Get Dialogs
+        self.about_dialog: Gtk.AboutDialog = builder.get_object("about_dialog")
+        self.clean_confirm_dialog: Gtk.MessageDialog = builder.get_object("clean_confirm_dialog")
+
+        # Connect Signals
+        builder.connect_signals(self)
+        
+        # Load CSS styling
+        self._load_css()
+        
+        self.window.show_all()
+
+    def _load_css(self) -> None:
+        """
+        Loads the custom CSS file to apply modern styling.
+        """
+        css_provider = Gtk.CssProvider()
+        css_path = os.path.join(os.path.dirname(__file__), "../resources/style.css")
+        
+        try:
+            css_provider.load_from_path(css_path)
+            screen = Gdk.Screen.get_default()
+            if screen:
+                Gtk.StyleContext.add_provider_for_screen(
+                    screen, 
+                    css_provider,
+                    Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+                )
+        except Exception as e:
+            print(f"Failed to load CSS: {e}")
+
+    def on_cell_toggled(self, widget: Gtk.CellRendererToggle, path: str) -> None:
+        """
+        Callback for when a checkbox in the treeview is toggled.
+        Updates the model and recalculates the summary.
+        """
+        self.store[path][0] = not self.store[path][0]
+        self.update_summary()
+
+    def update_summary(self) -> None:
+        """
+        Calculates the total size of selected items and updates the summary label.
+        Controls the clean button sensitivity.
+        """
+        total_bytes = 0
+        for row in self.store:
+            if row[0]: # If checked
+                total_bytes += row[4]
+        
+        mb = total_bytes / (1024 * 1024)
+        self.summary_label.set_text(f"Toplam Kazanç: {mb:.2f} MB")
+        self.btn_clean.set_sensitive(total_bytes > 0)
+
+    def on_scan_clicked(self, widget: Gtk.Button) -> None:
+        """
+        Callback for the 'Scan' button. Initiates the system scan in a separate thread.
+        """
+        self.btn_scan.set_sensitive(False)
+        self.store.clear()
+        self.info_label.set_text("Sistem taranıyor, lütfen bekleyin...")
+        self.info_bar.set_message_type(Gtk.MessageType.INFO)
+        
+        # Start scanning in a separate thread to keep UI responsive
+        thread = threading.Thread(target=self.run_scan_thread)
+        thread.daemon = True
+        thread.start()
+
+    def run_scan_thread(self) -> None:
+        """
+        Executed in a background thread. Performs the scan.
+        """
+        results = self.cleaner.scan()
+        GLib.idle_add(self.on_scan_finished, results)
+
+    def on_scan_finished(self, results: List[Dict[str, Any]]) -> None:
+        """
+        Callback invoked on the main thread when scanning is complete.
+        Populates the treeview with results.
+        """
+        self.store.clear()
+        for item in results:
+            # Checkbox, Category, Desc, Size Str, Size Bytes, Path, System
+            self.store.append([
+                True, 
+                item['category'], 
+                item['desc'], 
+                item['size_str'], 
+                item['size_bytes'],
+                item['path'],
+                item['system']
+            ])
+        
+        self.update_summary()
+        self.btn_scan.set_sensitive(True)
+        
+        if not results:
+            self.info_label.set_text("Temizlenecek öğe bulunamadı.")
+        else:
+            self.info_label.set_text("Tarama tamamlandı. Silinecek öğeleri seçin.")
+
+    def on_clean_clicked(self, widget: Gtk.Button) -> None:
+        """
+        Callback for the 'Clean' button. Confirms action and starts cleaning.
+        """
+        to_clean = []
+        for row in self.store:
+            if row[0]: # Checked
+                to_clean.append({
+                    'path': row[5],
+                    'system': row[6]
+                })
+
+        # Update dialog text
+        self.clean_confirm_dialog.format_secondary_text(
+            f"{len(to_clean)} kategori temizlenecek. Devam etmek istiyor musunuz?"
+        )
+        
+        response = self.clean_confirm_dialog.run()
+        self.clean_confirm_dialog.hide()
+        
+        if response == Gtk.ResponseType.OK:
+            self.info_label.set_text("Temizleniyor...")
+            # Threaded clean
+            thread = threading.Thread(target=self.run_clean_thread, args=(to_clean,))
+            thread.daemon = True
+            thread.start()
+
+    def run_clean_thread(self, to_clean: List[Dict[str, Any]]) -> None:
+        """
+        Executed in a background thread. Performs the cleaning operation.
+        """
+        success_count, fail_count, errors = self.cleaner.clean(to_clean)
+        GLib.idle_add(self.on_clean_finished, success_count, fail_count, errors)
+
+    def on_clean_finished(self, success_count: int, fail_count: int, errors: List[str]) -> None:
+        """
+        Callback invoked on the main thread when cleaning is complete.
+        Refreshes the scan and shows errors if any.
+        """
+        self.on_scan_clicked(None) # Refresh
+        
+        if fail_count > 0:
+            error_text = "\n".join(errors)
+            dialog = Gtk.MessageDialog(
+                transient_for=self.window,
+                flags=0,
+                message_type=Gtk.MessageType.ERROR,
+                buttons=Gtk.ButtonsType.OK,
+                text="Bazı İşlemler Başarısız Oldu",
+            )
+            dialog.format_secondary_text(f"{fail_count} hata oluştu:\n\n{error_text}")
+            dialog.run()
+            dialog.destroy()
+            self.info_label.set_text(f"Temizlik tamamlandı ancak {fail_count} hata oluştu.")
+        else:
+            self.info_label.set_text(f"Temizlik başarıyla tamamlandı. {success_count} işlem yapıldı.")
+
+    def on_about_clicked(self, widget: Gtk.Button) -> None:
+        """
+        Callback for the 'About' button. Shows the about dialog.
+        """
+        self.about_dialog.run()
+        self.about_dialog.hide()
+
