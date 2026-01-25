@@ -14,12 +14,16 @@ build:
 	mkdir -p dist/usr/share/pardus-system-cleaner/src
 	mkdir -p dist/usr/share/pardus-system-cleaner/resources
 	mkdir -p dist/usr/bin
+	mkdir -p dist/usr/share/applications
+	mkdir -p dist/usr/share/icons/hicolor/scalable/apps
 	
 	# Copy files
 	cp debian/control dist/DEBIAN/
 	cp -r src/* dist/usr/share/pardus-system-cleaner/src/
 	cp -r resources/* dist/usr/share/pardus-system-cleaner/resources/
 	cp bin/pardus-system-cleaner dist/usr/bin/
+	cp pardus-system-cleaner.desktop dist/usr/share/applications/
+	# Using a system icon for now, could be replaced with a custom one
 	chmod +x dist/usr/bin/pardus-system-cleaner
 	
 	# Build

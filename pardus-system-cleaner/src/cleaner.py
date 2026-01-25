@@ -11,7 +11,9 @@ class SystemCleaner:
         # (Name, Path, IsSystem, Description)
         self.categories = [
             ("Apt Önbelleği", "/var/cache/apt/archives", True, "İndirilmiş paket dosyaları"),
-            ("Eskimiş Loglar", "/var/log", True, "Sistem günlük dosyaları (eski)"),
+            ("Arşivlenmiş ve Sistem Günlükleri", "/var/log", True, "Eski günlüklerin silinmesi ve aktif günlüklerin boşaltılması."),
+            ("Gereksiz Bağımlılıklar", "/usr/bin/apt", True, "Kullanılmayan sistem paketleri (autoremove)"),
+            ("Sistem Hata Dökümleri", "/var/lib/systemd/coredump", True, "Uygulama çökme kayıtları"),
             ("Küçük Resim Önbelleği", os.path.expanduser("~/.cache/thumbnails"), False, "Dosya yöneticisi önizlemeleri"),
             ("Mozilla Önbelleği", os.path.expanduser("~/.cache/mozilla"), False, "Firefox tarayıcı önbelleği"),
             ("Chrome Önbelleği", os.path.expanduser("~/.cache/google-chrome"), False, "Chrome tarayıcı önbelleği")
@@ -48,7 +50,7 @@ class SystemCleaner:
         forbidden = ["/bin", "/boot", "/dev", "/etc", "/lib", "/proc", "/sys", "/usr/bin", "/usr/lib", "/usr/sbin"]
         
         # Explicitly allowed prefixes for System cleaning
-        allowed_system = ["/var/cache/apt/archives", "/var/log"]
+        allowed_system = ["/var/cache/apt/archives", "/var/log", "/usr/bin/apt", "/var/lib/systemd/coredump"]
         
         # Explicitly allowed prefixes for User cleaning
         allowed_user = [os.path.expanduser("~/.cache")]
@@ -134,9 +136,17 @@ class SystemCleaner:
         
         if path == "/var/cache/apt/archives":
             cmd = ["pkexec", "apt-get", "clean"]
+        elif path == "/usr/bin/apt":
+            cmd = ["pkexec", "apt-get", "autoremove", "-y"]
         elif path == "/var/log":
-            bash_cmd = "find /var/log -type f -regex '.*\\.\\(gz\\|[0-9]+\\)$' -delete"
+            bash_cmd = (
+                "find /var/log -type f -regex '.*\\.\\(gz\\|[0-9]+\\)$' -delete && "
+                "find /var/log -type f -name '*.log' -exec truncate -s 0 {} + && "
+                "journalctl --vacuum-time=1s"
+            )
             cmd = ["pkexec", "sh", "-c", bash_cmd]
+        elif path == "/var/lib/systemd/coredump":
+            cmd = ["pkexec", "sh", "-c", "rm -rf /var/lib/systemd/coredump/*"]
         else:
             return False, f"Bilinmeyen sistem yolu: {path}"
 
