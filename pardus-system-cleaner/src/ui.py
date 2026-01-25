@@ -46,6 +46,14 @@ class MainWindow(Gtk.Window):
         self.about_dialog: Gtk.AboutDialog = builder.get_object("about_dialog")
         self.clean_confirm_dialog: Gtk.MessageDialog = builder.get_object("clean_confirm_dialog")
 
+        # Status Icon (programmatic addition to InfoBar)
+        self.status_icon = Gtk.Image()
+        info_content = self.info_bar.get_content_area()
+        # Add icon at the start of the box
+        info_content.pack_start(self.status_icon, False, False, 0)
+        info_content.reorder_child(self.status_icon, 0)
+        self.status_icon.show()
+
         # Connect Signals
         builder.connect_signals(self)
         
@@ -138,9 +146,13 @@ class MainWindow(Gtk.Window):
         self.btn_scan.set_sensitive(True)
         
         if not results:
-            self.info_label.set_text("Temizlenecek öğe bulunamadı.")
+            self.info_bar.set_message_type(Gtk.MessageType.WARNING)
+            self.status_icon.set_from_icon_name("dialog-warning-symbolic", Gtk.IconSize.BUTTON)
+            self.info_label.set_markup("<span weight='bold'>Temizlenecek öğe bulunamadı.</span>")
         else:
-            self.info_label.set_text("Tarama tamamlandı. Silinecek öğeleri seçin.")
+            self.info_bar.set_message_type(Gtk.MessageType.INFO)
+            self.status_icon.set_from_icon_name("dialog-information-symbolic", Gtk.IconSize.BUTTON)
+            self.info_label.set_markup("<span weight='bold'>Tarama tamamlandı.</span> Silinecek öğeleri seçin.")
 
     def on_clean_clicked(self, widget: Gtk.Button) -> None:
         """
@@ -184,6 +196,8 @@ class MainWindow(Gtk.Window):
         self.on_scan_clicked(None) # Refresh
         
         if fail_count > 0:
+            self.info_bar.set_message_type(Gtk.MessageType.ERROR)
+            self.status_icon.set_from_icon_name("dialog-error-symbolic", Gtk.IconSize.BUTTON)
             error_text = "\n".join(errors)
             dialog = Gtk.MessageDialog(
                 transient_for=self.window,
@@ -195,9 +209,11 @@ class MainWindow(Gtk.Window):
             dialog.format_secondary_text(f"{fail_count} hata oluştu:\n\n{error_text}")
             dialog.run()
             dialog.destroy()
-            self.info_label.set_text(f"Temizlik tamamlandı ancak {fail_count} hata oluştu.")
+            self.info_label.set_markup(f"Temizlik tamamlandı ancak <span foreground='red'>{fail_count} hata</span> oluştu.")
         else:
-            self.info_label.set_text(f"Temizlik başarıyla tamamlandı. {success_count} işlem yapıldı.")
+            self.info_bar.set_message_type(Gtk.MessageType.SUCCESS)
+            self.status_icon.set_from_icon_name("emblem-ok-symbolic", Gtk.IconSize.BUTTON)
+            self.info_label.set_markup(f"<b>Sistem başarıyla temizlendi!</b> {success_count} işlem yapıldı.")
 
     def on_about_clicked(self, widget: Gtk.Button) -> None:
         """
