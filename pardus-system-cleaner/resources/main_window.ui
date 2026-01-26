@@ -19,6 +19,18 @@
       <column type="gboolean"/>
     </columns>
   </object>
+  <object class="GtkListStore" id="history_list_store">
+    <columns>
+      <!-- 0: Date -->
+      <column type="gchararray"/>
+      <!-- 1: Categories -->
+      <column type="gchararray"/>
+      <!-- 2: Total Freed -->
+      <column type="gchararray"/>
+      <!-- 3: Status -->
+      <column type="gchararray"/>
+    </columns>
+  </object>
   <object class="GtkWindow" id="main_window">
     <property name="can_focus">False</property>
     <property name="title" translatable="yes">Pardus Sistem Temizlik Aracı</property>
@@ -97,71 +109,258 @@
           </packing>
         </child>
 
-        <!-- Main TreeView -->
         <child>
-          <object class="GtkScrolledWindow">
+          <object class="GtkNotebook" id="notebook">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
-            <property name="shadow_type">in</property>
-            <property name="min_content_height">400</property>
+            
+            <!-- Tab 1: Clean -->
             <child>
-              <object class="GtkTreeView" id="treeview">
+              <object class="GtkBox">
                 <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="model">file_list_store</property>
-                <child internal-child="selection">
-                  <object class="GtkTreeSelection"/>
-                </child>
-                <!-- Column 1: Toggle -->
+                <property name="can_focus">False</property>
+                <property name="orientation">vertical</property>
+                <property name="spacing">10</property>
+                <property name="margin">10</property>
+
+                <!-- Main TreeView -->
                 <child>
-                  <object class="GtkTreeViewColumn">
-                    <property name="title" translatable="yes">Seç</property>
+                  <object class="GtkScrolledWindow">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="shadow_type">in</property>
+                    <property name="min_content_height">350</property>
                     <child>
-                      <object class="GtkCellRendererToggle" id="renderer_toggle">
-                        <signal name="toggled" handler="on_cell_toggled" swapped="no"/>
+                      <object class="GtkTreeView" id="treeview">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="model">file_list_store</property>
+                        <child internal-child="selection">
+                          <object class="GtkTreeSelection"/>
+                        </child>
+                        <!-- Column 1: Toggle -->
+                        <child>
+                          <object class="GtkTreeViewColumn">
+                            <property name="title" translatable="yes">Seç</property>
+                            <child>
+                              <object class="GtkCellRendererToggle" id="renderer_toggle">
+                                <signal name="toggled" handler="on_cell_toggled" swapped="no"/>
+                              </object>
+                              <attributes>
+                                <attribute name="active">0</attribute>
+                              </attributes>
+                            </child>
+                          </object>
+                        </child>
+                        <!-- Column 2: Category -->
+                        <child>
+                          <object class="GtkTreeViewColumn">
+                            <property name="title" translatable="yes">Kategori</property>
+                            <child>
+                              <object class="GtkCellRendererText"/>
+                              <attributes>
+                                <attribute name="text">1</attribute>
+                              </attributes>
+                            </child>
+                          </object>
+                        </child>
+                        <!-- Column 3: Description -->
+                        <child>
+                          <object class="GtkTreeViewColumn">
+                            <property name="title" translatable="yes">Açıklama</property>
+                            <child>
+                              <object class="GtkCellRendererText"/>
+                              <attributes>
+                                <attribute name="text">2</attribute>
+                              </attributes>
+                            </child>
+                          </object>
+                        </child>
+                        <!-- Column 4: Size -->
+                        <child>
+                          <object class="GtkTreeViewColumn">
+                            <property name="title" translatable="yes">Boyut</property>
+                            <child>
+                              <object class="GtkCellRendererText"/>
+                              <attributes>
+                                <attribute name="text">3</attribute>
+                              </attributes>
+                            </child>
+                          </object>
+                        </child>
                       </object>
-                      <attributes>
-                        <attribute name="active">0</attribute>
-                      </attributes>
                     </child>
                   </object>
+                  <packing>
+                    <property name="expand">True</property>
+                    <property name="fill">True</property>
+                    <property name="position">0</property>
+                  </packing>
                 </child>
-                <!-- Column 2: Category -->
+
+                <!-- Summary Label -->
                 <child>
-                  <object class="GtkTreeViewColumn">
-                    <property name="title" translatable="yes">Kategori</property>
-                    <child>
-                      <object class="GtkCellRendererText"/>
-                      <attributes>
-                        <attribute name="text">1</attribute>
-                      </attributes>
-                    </child>
+                  <object class="GtkLabel" id="summary_label">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="label" translatable="yes">Toplam Kazanç: 0 MB</property>
+                    <property name="halign">end</property>
+                    <style>
+                        <class name="summary-label"/>
+                    </style>
                   </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">1</property>
+                  </packing>
                 </child>
-                <!-- Column 3: Description -->
+
+                <!-- Action Area -->
                 <child>
-                  <object class="GtkTreeViewColumn">
-                    <property name="title" translatable="yes">Açıklama</property>
+                  <object class="GtkBox">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="spacing">10</property>
+                    <property name="halign">end</property>
                     <child>
-                      <object class="GtkCellRendererText"/>
-                      <attributes>
-                        <attribute name="text">2</attribute>
-                      </attributes>
+                      <object class="GtkButton" id="btn_scan">
+                        <property name="label" translatable="yes">Sistemi Tara</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="receives_default">True</property>
+                        <signal name="clicked" handler="on_scan_clicked" swapped="no"/>
+                        <style>
+                          <class name="suggested-action"/>
+                        </style>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkButton" id="btn_clean">
+                        <property name="label" translatable="yes">Temizle</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="receives_default">True</property>
+                        <property name="sensitive">False</property>
+                        <signal name="clicked" handler="on_clean_clicked" swapped="no"/>
+                        <style>
+                          <class name="destructive-action"/>
+                        </style>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">1</property>
+                      </packing>
                     </child>
                   </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">2</property>
+                  </packing>
                 </child>
-                <!-- Column 4: Size -->
+              </object>
+            </child>
+            <child type="tab">
+              <object class="GtkLabel">
+                <property name="visible">True</property>
+                <property name="label" translatable="yes">Temizlik</property>
+              </object>
+            </child>
+
+            <!-- Tab 2: History -->
+            <child>
+              <object class="GtkBox">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="orientation">vertical</property>
+                <property name="spacing">10</property>
+                <property name="margin">10</property>
                 <child>
-                  <object class="GtkTreeViewColumn">
-                    <property name="title" translatable="yes">Boyut</property>
+                  <object class="GtkScrolledWindow">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="shadow_type">in</property>
                     <child>
-                      <object class="GtkCellRendererText"/>
-                      <attributes>
-                        <attribute name="text">3</attribute>
-                      </attributes>
+                      <object class="GtkTreeView" id="history_treeview">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="model">history_list_store</property>
+                        <child internal-child="selection">
+                          <object class="GtkTreeSelection"/>
+                        </child>
+                        <!-- Column 1: Date -->
+                        <child>
+                          <object class="GtkTreeViewColumn">
+                            <property name="title" translatable="yes">Tarih</property>
+                            <child>
+                              <object class="GtkCellRendererText"/>
+                              <attributes>
+                                <attribute name="text">0</attribute>
+                              </attributes>
+                            </child>
+                          </object>
+                        </child>
+                        <!-- Column 2: Categories -->
+                        <child>
+                          <object class="GtkTreeViewColumn">
+                            <property name="title" translatable="yes">Kategoriler</property>
+                            <child>
+                              <object class="GtkCellRendererText"/>
+                              <attributes>
+                                <attribute name="text">1</attribute>
+                              </attributes>
+                            </child>
+                          </object>
+                        </child>
+                        <!-- Column 3: Total Freed -->
+                        <child>
+                          <object class="GtkTreeViewColumn">
+                            <property name="title" translatable="yes">Kazanç</property>
+                            <child>
+                              <object class="GtkCellRendererText"/>
+                              <attributes>
+                                <attribute name="text">2</attribute>
+                              </attributes>
+                            </child>
+                          </object>
+                        </child>
+                        <!-- Column 4: Status -->
+                        <child>
+                          <object class="GtkTreeViewColumn">
+                            <property name="title" translatable="yes">Durum</property>
+                            <child>
+                              <object class="GtkCellRendererText"/>
+                              <attributes>
+                                <attribute name="text">3</attribute>
+                              </attributes>
+                            </child>
+                          </object>
+                        </child>
+                      </object>
                     </child>
                   </object>
+                  <packing>
+                    <property name="expand">True</property>
+                    <property name="fill">True</property>
+                    <property name="position">0</property>
+                  </packing>
                 </child>
+              </object>
+              <packing>
+                <property name="position">1</property>
+              </packing>
+            </child>
+            <child type="tab">
+              <object class="GtkLabel">
+                <property name="visible">True</property>
+                <property name="label" translatable="yes">Temizlik Geçmişi</property>
               </object>
             </child>
           </object>
@@ -169,74 +368,6 @@
             <property name="expand">True</property>
             <property name="fill">True</property>
             <property name="position">1</property>
-          </packing>
-        </child>
-
-        <!-- Summary Label -->
-        <child>
-          <object class="GtkLabel" id="summary_label">
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="label" translatable="yes">Toplam Kazanç: 0 MB</property>
-            <property name="halign">end</property>
-            <style>
-                <class name="summary-label"/>
-            </style>
-          </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="fill">True</property>
-            <property name="position">2</property>
-          </packing>
-        </child>
-
-        <!-- Action Area -->
-        <child>
-          <object class="GtkBox">
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="spacing">10</property>
-            <property name="halign">end</property>
-            <child>
-              <object class="GtkButton" id="btn_scan">
-                <property name="label" translatable="yes">Sistemi Tara</property>
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">True</property>
-                <signal name="clicked" handler="on_scan_clicked" swapped="no"/>
-                <style>
-                  <class name="suggested-action"/>
-                </style>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="position">0</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkButton" id="btn_clean">
-                <property name="label" translatable="yes">Temizle</property>
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">True</property>
-                <property name="sensitive">False</property>
-                <signal name="clicked" handler="on_clean_clicked" swapped="no"/>
-                <style>
-                  <class name="destructive-action"/>
-                </style>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="position">1</property>
-              </packing>
-            </child>
-          </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="fill">True</property>
-            <property name="position">3</property>
           </packing>
         </child>
       </object>

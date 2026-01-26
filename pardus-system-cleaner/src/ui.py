@@ -7,6 +7,7 @@ gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, GLib, Gdk
 
 from src.cleaner import SystemCleaner
+from src.history_manager import HistoryManager
 
 class MainWindow(Gtk.Window):
     """
@@ -21,7 +22,9 @@ class MainWindow(Gtk.Window):
         # Instead, we pull the window object from the builder.
         
         self.cleaner: SystemCleaner = SystemCleaner()
+        self.history_manager: HistoryManager = HistoryManager()
         self.scan_data: List[Dict[str, Any]] = []
+        self.current_cleaning_info: Dict[str, Any] = {}
 
         # Load XML
         builder = Gtk.Builder()
@@ -42,6 +45,11 @@ class MainWindow(Gtk.Window):
         self.btn_clean: Gtk.Button = builder.get_object("btn_clean")
         self.btn_about: Gtk.Button = builder.get_object("btn_about")
 
+        # History Objects
+        self.history_treeview: Gtk.TreeView = builder.get_object("history_treeview")
+        self.history_store: Gtk.ListStore = builder.get_object("history_list_store")
+        self.notebook: Gtk.Notebook = builder.get_object("notebook")
+
         # Get Dialogs
         self.about_dialog: Gtk.AboutDialog = builder.get_object("about_dialog")
         self.clean_confirm_dialog: Gtk.MessageDialog = builder.get_object("clean_confirm_dialog")
@@ -60,7 +68,24 @@ class MainWindow(Gtk.Window):
         # Load CSS styling
         self._load_css()
         
+        # Initial History Load
+        self.populate_history()
+
         self.window.show_all()
+
+    def populate_history(self) -> None:
+        """
+        Loads cleaning history from the HistoryManager and populates the history treeview.
+        """
+        self.history_store.clear()
+        entries = self.history_manager.get_all_entries()
+        for entry in entries:
+            self.history_store.append([
+                entry.get("date", ""),
+                entry.get("categories", ""),
+                entry.get("total_freed", ""),
+                entry.get("status", "")
+            ])
 
     def _load_css(self) -> None:
         """
@@ -171,6 +196,20 @@ class MainWindow(Gtk.Window):
             f"{len(to_clean)} kategori temizlenecek. Devam etmek istiyor musunuz?"
         )
         
+        # Store current cleaning info for history logging
+        categories = []
+        total_bytes = 0
+        for row in self.store:
+            if row[0]:
+                categories.append(row[1])
+                total_bytes += row[4]
+        
+        from src.utils import format_size
+        self.current_cleaning_info = {
+            'categories': categories,
+            'total_freed_str': format_size(total_bytes)
+        }
+
         response = self.clean_confirm_dialog.run()
         self.clean_confirm_dialog.hide()
         
@@ -210,10 +249,22 @@ class MainWindow(Gtk.Window):
             dialog.run()
             dialog.destroy()
             self.info_label.set_markup(f"Temizlik tamamlandı ancak <span foreground='red'>{fail_count} hata</span> oluştu.")
+            status = "Kısmi" if success_count > 0 else "Başarısız"
         else:
-            self.info_bar.set_message_type(Gtk.MessageType.SUCCESS)
+            self.info_bar.set_message_type(Gtk.MessageType.INFO)
             self.status_icon.set_from_icon_name("emblem-ok-symbolic", Gtk.IconSize.BUTTON)
             self.info_label.set_markup(f"<b>Sistem başarıyla temizlendi!</b> {success_count} işlem yapıldı.")
+            status = "Başarılı"
+
+        # Log to history
+        if self.current_cleaning_info:
+            self.history_manager.add_entry(
+                self.current_cleaning_info['categories'],
+                self.current_cleaning_info['total_freed_str'],
+                status
+            )
+            self.populate_history()
+            self.current_cleaning_info = {}
 
     def on_about_clicked(self, widget: Gtk.Button) -> None:
         """
