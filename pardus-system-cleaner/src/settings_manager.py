@@ -13,7 +13,12 @@ class SettingsManager:
         self.defaults = {
             "auto_maintenance_enabled": False,
             "last_maintenance_date": None,
-            "maintenance_frequency_days": 30
+            "maintenance_frequency_days": 30,
+            "idle_threshold_minutes": 15,
+            "disk_threshold_enabled": False,
+            "disk_threshold_percent": 90,
+            "check_ac_power": True,
+            "notify_on_completion": False
         }
         self.settings = self.defaults.copy()
         self._load_settings()

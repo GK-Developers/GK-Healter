@@ -9,6 +9,7 @@ from gi.repository import Gtk, GLib, Gdk
 from src.cleaner import SystemCleaner
 from src.history_manager import HistoryManager
 from src.settings_manager import SettingsManager
+from src.auto_maintenance_manager import AutoMaintenanceManager
 import datetime
 
 class MainWindow(Gtk.Window):
@@ -24,11 +25,13 @@ class MainWindow(Gtk.Window):
         # Instead, we pull the window object from the builder.
         
         self.cleaner: SystemCleaner = SystemCleaner()
-        self.history_manager: HistoryManager = HistoryManager()
         self.settings_manager: SettingsManager = SettingsManager()
+        self.history_manager: HistoryManager = HistoryManager()
+        self.auto_maintenance_manager: AutoMaintenanceManager = AutoMaintenanceManager(self.settings_manager, self.history_manager)
         self.scan_data: List[Dict[str, Any]] = []
         self.current_cleaning_info: Dict[str, Any] = {}
         self.is_auto_maintenance_run: bool = False
+        self.is_cleaning_in_progress: bool = False
 
         # Load XML
         builder = Gtk.Builder()
@@ -59,6 +62,11 @@ class MainWindow(Gtk.Window):
         # Settings Objects
         self.switch_auto_maintenance: Gtk.Switch = builder.get_object("switch_auto_maintenance")
         self.combo_frequency: Gtk.ComboBoxText = builder.get_object("combo_frequency")
+        self.spin_idle: Gtk.SpinButton = builder.get_object("spin_idle")
+        self.switch_disk_threshold: Gtk.Switch = builder.get_object("switch_disk_threshold")
+        self.spin_disk_percent: Gtk.SpinButton = builder.get_object("spin_disk_percent")
+        self.switch_ac_power: Gtk.Switch = builder.get_object("switch_ac_power")
+        self.switch_notify: Gtk.Switch = builder.get_object("switch_notify")
         self.lbl_last_maintenance: Gtk.Label = builder.get_object("lbl_last_maintenance")
         self.btn_back: Gtk.Button = builder.get_object("btn_back")
 
@@ -94,6 +102,12 @@ class MainWindow(Gtk.Window):
         
         freq = self.settings_manager.get("maintenance_frequency_days")
         self.combo_frequency.set_active_id(str(freq))
+
+        self.spin_idle.set_value(self.settings_manager.get("idle_threshold_minutes"))
+        self.switch_disk_threshold.set_active(self.settings_manager.get("disk_threshold_enabled"))
+        self.spin_disk_percent.set_value(self.settings_manager.get("disk_threshold_percent"))
+        self.switch_ac_power.set_active(self.settings_manager.get("check_ac_power"))
+        self.switch_notify.set_active(self.settings_manager.get("notify_on_completion"))
         
         last_date = self.settings_manager.get("last_maintenance_date")
         if last_date:
@@ -102,67 +116,22 @@ class MainWindow(Gtk.Window):
             self.lbl_last_maintenance.set_text("Hiç yapılmadı")
 
     def check_auto_maintenance(self) -> bool:
-        """Checks if auto-maintenance is due and prompts the user."""
-        if self.settings_manager.is_maintenance_due():
-            # Run a background scan for SAFE items only
-            thread = threading.Thread(target=self.run_auto_scan_thread)
-            thread.daemon = True
-            thread.start()
-        return False # Only run once
+        """Periodic check for auto-maintenance conditions every 1 minute."""
+        if self.is_cleaning_in_progress:
+            return True # Try again in a minute
 
-    def run_auto_scan_thread(self) -> None:
-        """Background scan for safe maintenance items."""
-        results = self.cleaner.scan()
-        # Filter for SAFE items as per requirements
-        safe_categories = [
-            "Apt Önbelleği", 
-            "Arşivlenmiş ve Sistem Günlükleri", 
-            "Sistem Hata Dökümleri", 
-            "Küçük Resim Önbelleği", 
-            "Mozilla Önbelleği", 
-            "Chrome Önbelleği"
-        ]
+        if self.auto_maintenance_manager.can_run_maintenance(force_disk_check=True):
+            print("Starting intelligence auto-maintenance...")
+            res = self.auto_maintenance_manager.run_maintenance()
+            if res and self.settings_manager.get("notify_on_completion"):
+                self.show_notification("Otomatik Bakım Tamamlandı", 
+                                     f"{res['freed']} alan temizlendi.")
+            self.populate_history()
+            self._sync_settings_ui()
         
-        safe_items = [item for item in results if item['category'] in safe_categories]
-        
-        if safe_items:
-            total_bytes = sum(item['size_bytes'] for item in safe_items)
-            from src.utils import format_size
-            total_freed_str = format_size(total_bytes)
-            GLib.idle_add(self.show_auto_maintenance_prompt, safe_items, total_freed_str)
-
-    def show_auto_maintenance_prompt(self, safe_items: List[Dict[str, Any]], total_freed_str: str) -> None:
-        """Prompts user to perform automatic maintenance."""
-        dialog = Gtk.MessageDialog(
-            transient_for=self.window,
-            flags=0,
-            message_type=Gtk.MessageType.QUESTION,
-            buttons=Gtk.ButtonsType.YES_NO,
-            text="Güvenli Otomatik Bakım Zamanı"
-        )
-        dialog.format_secondary_text(
-            f"Sisteminizde yaklaşık {total_freed_str} gereksiz dosya bulundu.\n\n"
-            "Güvenli otomatik bakım yapılsın mı?\n"
-            "(Sadece önbellek ve eski günlük dosyaları temizlenecektir.)"
-        )
-        
-        response = dialog.run()
-        dialog.destroy()
-        
-        if response == Gtk.ResponseType.YES:
-            self.is_auto_maintenance_run = True
-            self.info_label.set_text("Otomatik bakım yapılıyor...")
-            # Reuse regular cleaning thread logic
-            # We need to reconstruction current_cleaning_info
-            categories = [item['category'] for item in safe_items]
-            self.current_cleaning_info = {
-                'categories': categories,
-                'total_freed_str': total_freed_str,
-                'is_auto': True
-            }
-            thread = threading.Thread(target=self.run_clean_thread, args=(safe_items,))
-            thread.daemon = True
-            thread.start()
+        # Change to 1 minute interval after first check
+        GLib.timeout_add_seconds(60, self.check_auto_maintenance)
+        return False # Stop current 1s timer
 
     def on_settings_clicked(self, widget: Gtk.Button) -> None:
         self._sync_settings_ui()
@@ -178,6 +147,29 @@ class MainWindow(Gtk.Window):
         active_id = combo.get_active_id()
         if active_id:
             self.settings_manager.set("maintenance_frequency_days", int(active_id))
+
+    def on_idle_changed(self, spin: Gtk.SpinButton) -> None:
+        self.settings_manager.set("idle_threshold_minutes", int(spin.get_value()))
+
+    def on_disk_threshold_toggled(self, switch: Gtk.Switch, gparam: Any) -> None:
+        self.settings_manager.set("disk_threshold_enabled", switch.get_active())
+
+    def on_disk_percent_changed(self, spin: Gtk.SpinButton) -> None:
+        self.settings_manager.set("disk_threshold_percent", int(spin.get_value()))
+
+    def on_ac_power_toggled(self, switch: Gtk.Switch, gparam: Any) -> None:
+        self.settings_manager.set("check_ac_power", switch.get_active())
+
+    def on_notify_toggled(self, switch: Gtk.Switch, gparam: Any) -> None:
+        self.settings_manager.set("notify_on_completion", switch.get_active())
+
+    def show_notification(self, title: str, message: str) -> None:
+        """Displays a system notification."""
+        try:
+            import subprocess
+            subprocess.run(['notify-send', title, message])
+        except Exception:
+            pass
 
     def populate_history(self) -> None:
         """
@@ -270,6 +262,12 @@ class MainWindow(Gtk.Window):
         """
         Callback for the 'Clean' button. Confirms action and starts cleaning.
         """
+        if self.is_cleaning_in_progress:
+            self.info_bar.set_message_type(Gtk.MessageType.WARNING)
+            self.status_icon.set_from_icon_name("dialog-warning-symbolic", Gtk.IconSize.BUTTON)
+            self.info_label.set_markup("<span weight='bold'>Başka bir temizlik işlemi devam ediyor.</span>")
+            return
+
         to_clean = []
         for row in self.store:
             if row[0]: # Checked
@@ -277,6 +275,12 @@ class MainWindow(Gtk.Window):
                     'path': row[5],
                     'system': row[6]
                 })
+
+        if not to_clean:
+            self.info_bar.set_message_type(Gtk.MessageType.WARNING)
+            self.status_icon.set_from_icon_name("dialog-warning-symbolic", Gtk.IconSize.BUTTON)
+            self.info_label.set_markup("<span weight='bold'>Temizlenecek öğe seçilmedi.</span>")
+            return
 
         # Update dialog text
         self.clean_confirm_dialog.format_secondary_text(
@@ -301,7 +305,13 @@ class MainWindow(Gtk.Window):
         self.clean_confirm_dialog.hide()
         
         if response == Gtk.ResponseType.OK:
+            self.is_cleaning_in_progress = True
+            self.btn_clean.set_sensitive(False)
+            self.btn_scan.set_sensitive(False)
             self.info_label.set_text("Temizleniyor...")
+            self.info_bar.set_message_type(Gtk.MessageType.INFO)
+            self.status_icon.set_from_icon_name("process-working-symbolic", Gtk.IconSize.BUTTON)
+            
             # Threaded clean
             thread = threading.Thread(target=self.run_clean_thread, args=(to_clean,))
             thread.daemon = True
@@ -319,6 +329,7 @@ class MainWindow(Gtk.Window):
         Callback invoked on the main thread when cleaning is complete.
         Refreshes the scan and shows errors if any.
         """
+        self.is_cleaning_in_progress = False
         self.on_scan_clicked(None) # Refresh
         
         if fail_count > 0:
@@ -346,13 +357,6 @@ class MainWindow(Gtk.Window):
         # Log to history
         if self.current_cleaning_info:
             is_auto = self.current_cleaning_info.get('is_auto', False)
-            label_suffix = " (Otomatik bakım)" if is_auto else ""
-            
-            categories_str = ", ".join(self.current_cleaning_info['categories']) + label_suffix
-            
-            # Note: add_entry expects a list of categories normally, but let's check history_manager
-            # Actually history_manager.py:add_entry(categories: List[str], ...) joins them.
-            # I'll update it to handle the label properly or just pass the modified list.
             
             cats = list(self.current_cleaning_info['categories'])
             if is_auto:
@@ -379,4 +383,3 @@ class MainWindow(Gtk.Window):
         """
         self.about_dialog.run()
         self.about_dialog.hide()
-
