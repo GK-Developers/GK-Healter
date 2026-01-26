@@ -8,6 +8,8 @@ from gi.repository import Gtk, GLib, Gdk
 
 from src.cleaner import SystemCleaner
 from src.history_manager import HistoryManager
+from src.settings_manager import SettingsManager
+import datetime
 
 class MainWindow(Gtk.Window):
     """
@@ -23,8 +25,10 @@ class MainWindow(Gtk.Window):
         
         self.cleaner: SystemCleaner = SystemCleaner()
         self.history_manager: HistoryManager = HistoryManager()
+        self.settings_manager: SettingsManager = SettingsManager()
         self.scan_data: List[Dict[str, Any]] = []
         self.current_cleaning_info: Dict[str, Any] = {}
+        self.is_auto_maintenance_run: bool = False
 
         # Load XML
         builder = Gtk.Builder()
@@ -49,6 +53,12 @@ class MainWindow(Gtk.Window):
         self.history_treeview: Gtk.TreeView = builder.get_object("history_treeview")
         self.history_store: Gtk.ListStore = builder.get_object("history_list_store")
         self.notebook: Gtk.Notebook = builder.get_object("notebook")
+        self.btn_settings: Gtk.Button = builder.get_object("btn_settings")
+
+        # Settings Objects
+        self.settings_dialog: Gtk.Dialog = builder.get_object("settings_dialog")
+        self.switch_auto_maintenance: Gtk.Switch = builder.get_object("switch_auto_maintenance")
+        self.lbl_last_maintenance: Gtk.Label = builder.get_object("lbl_last_maintenance")
 
         # Get Dialogs
         self.about_dialog: Gtk.AboutDialog = builder.get_object("about_dialog")
@@ -65,13 +75,98 @@ class MainWindow(Gtk.Window):
         # Connect Signals
         builder.connect_signals(self)
         
-        # Load CSS styling
-        self._load_css()
-        
         # Initial History Load
         self.populate_history()
 
+        # Load Settings UI
+        self._sync_settings_ui()
+
         self.window.show_all()
+
+        # Check for auto maintenance after a short delay
+        GLib.timeout_add(1000, self.check_auto_maintenance)
+
+    def _sync_settings_ui(self) -> None:
+        """Syncs the settings dialog with values from SettingsManager."""
+        self.switch_auto_maintenance.set_active(self.settings_manager.get("auto_maintenance_enabled"))
+        last_date = self.settings_manager.get("last_maintenance_date")
+        if last_date:
+            self.lbl_last_maintenance.set_text(last_date)
+        else:
+            self.lbl_last_maintenance.set_text("Hiç yapılmadı")
+
+    def check_auto_maintenance(self) -> bool:
+        """Checks if auto-maintenance is due and prompts the user."""
+        if self.settings_manager.is_maintenance_due():
+            # Run a background scan for SAFE items only
+            thread = threading.Thread(target=self.run_auto_scan_thread)
+            thread.daemon = True
+            thread.start()
+        return False # Only run once
+
+    def run_auto_scan_thread(self) -> None:
+        """Background scan for safe maintenance items."""
+        results = self.cleaner.scan()
+        # Filter for SAFE items as per requirements
+        safe_categories = [
+            "Apt Önbelleği", 
+            "Arşivlenmiş ve Sistem Günlükleri", 
+            "Sistem Hata Dökümleri", 
+            "Küçük Resim Önbelleği", 
+            "Mozilla Önbelleği", 
+            "Chrome Önbelleği"
+        ]
+        
+        safe_items = [item for item in results if item['category'] in safe_categories]
+        
+        if safe_items:
+            total_bytes = sum(item['size_bytes'] for item in safe_items)
+            from src.utils import format_size
+            total_freed_str = format_size(total_bytes)
+            GLib.idle_add(self.show_auto_maintenance_prompt, safe_items, total_freed_str)
+
+    def show_auto_maintenance_prompt(self, safe_items: List[Dict[str, Any]], total_freed_str: str) -> None:
+        """Prompts user to perform automatic maintenance."""
+        dialog = Gtk.MessageDialog(
+            transient_for=self.window,
+            flags=0,
+            message_type=Gtk.MessageType.QUESTION,
+            buttons=Gtk.ButtonsType.YES_NO,
+            text="Güvenli Otomatik Bakım Zamanı"
+        )
+        dialog.format_secondary_text(
+            f"Sisteminizde yaklaşık {total_freed_str} gereksiz dosya bulundu.\n\n"
+            "Güvenli otomatik bakım yapılsın mı?\n"
+            "(Sadece önbellek ve eski günlük dosyaları temizlenecektir.)"
+        )
+        
+        response = dialog.run()
+        dialog.destroy()
+        
+        if response == Gtk.ResponseType.YES:
+            self.is_auto_maintenance_run = True
+            self.info_label.set_text("Otomatik bakım yapılıyor...")
+            # Reuse regular cleaning thread logic
+            # We need to reconstruction current_cleaning_info
+            categories = [item['category'] for item in safe_items]
+            self.current_cleaning_info = {
+                'categories': categories,
+                'total_freed_str': total_freed_str,
+                'is_auto': True
+            }
+            thread = threading.Thread(target=self.run_clean_thread, args=(safe_items,))
+            thread.daemon = True
+            thread.start()
+
+    def on_settings_clicked(self, widget: Gtk.Button) -> None:
+        self._sync_settings_ui()
+        self.settings_dialog.show_all()
+
+    def on_settings_close_clicked(self, widget: Gtk.Button) -> None:
+        self.settings_dialog.hide()
+
+    def on_auto_maintenance_toggled(self, switch: Gtk.Switch, gparam: Any) -> None:
+        self.settings_manager.set("auto_maintenance_enabled", switch.get_active())
 
     def populate_history(self) -> None:
         """
@@ -86,25 +181,6 @@ class MainWindow(Gtk.Window):
                 entry.get("total_freed", ""),
                 entry.get("status", "")
             ])
-
-    def _load_css(self) -> None:
-        """
-        Loads the custom CSS file to apply modern styling.
-        """
-        css_provider = Gtk.CssProvider()
-        css_path = os.path.join(os.path.dirname(__file__), "../resources/style.css")
-        
-        try:
-            css_provider.load_from_path(css_path)
-            screen = Gdk.Screen.get_default()
-            if screen:
-                Gtk.StyleContext.add_provider_for_screen(
-                    screen, 
-                    css_provider,
-                    Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
-                )
-        except Exception as e:
-            print(f"Failed to load CSS: {e}")
 
     def on_cell_toggled(self, widget: Gtk.CellRendererToggle, path: str) -> None:
         """
@@ -258,11 +334,31 @@ class MainWindow(Gtk.Window):
 
         # Log to history
         if self.current_cleaning_info:
+            is_auto = self.current_cleaning_info.get('is_auto', False)
+            label_suffix = " (Otomatik bakım)" if is_auto else ""
+            
+            categories_str = ", ".join(self.current_cleaning_info['categories']) + label_suffix
+            
+            # Note: add_entry expects a list of categories normally, but let's check history_manager
+            # Actually history_manager.py:add_entry(categories: List[str], ...) joins them.
+            # I'll update it to handle the label properly or just pass the modified list.
+            
+            cats = list(self.current_cleaning_info['categories'])
+            if is_auto:
+                cats.append("Otomatik bakım")
+
             self.history_manager.add_entry(
-                self.current_cleaning_info['categories'],
+                cats,
                 self.current_cleaning_info['total_freed_str'],
                 status
             )
+            
+            if is_auto:
+                # Update last maintenance date
+                now_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                self.settings_manager.set("last_maintenance_date", now_str)
+                self.is_auto_maintenance_run = False
+
             self.populate_history()
             self.current_cleaning_info = {}
 
