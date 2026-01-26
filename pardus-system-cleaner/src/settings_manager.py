@@ -13,7 +13,7 @@ class SettingsManager:
         self.defaults = {
             "auto_maintenance_enabled": False,
             "last_maintenance_date": None,
-            "maintenance_frequency_days": 30,
+            "maintenance_frequency_days": 7,
             "idle_threshold_minutes": 15,
             "disk_threshold_enabled": False,
             "disk_threshold_percent": 90,

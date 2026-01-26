@@ -69,6 +69,7 @@ class MainWindow(Gtk.Window):
         self.switch_notify: Gtk.Switch = builder.get_object("switch_notify")
         self.lbl_last_maintenance: Gtk.Label = builder.get_object("lbl_last_maintenance")
         self.btn_back: Gtk.Button = builder.get_object("btn_back")
+        self.box_auto_settings: Gtk.Box = builder.get_object("box_auto_settings")
 
         # Get Dialogs
         self.about_dialog: Gtk.AboutDialog = builder.get_object("about_dialog")
@@ -115,6 +116,13 @@ class MainWindow(Gtk.Window):
         else:
             self.lbl_last_maintenance.set_text("Hiç yapılmadı")
 
+        self._update_settings_visibility()
+
+    def _update_settings_visibility(self) -> None:
+        """Shows/hides detailed maintenance settings based on the master switch."""
+        is_enabled = self.switch_auto_maintenance.get_active()
+        self.box_auto_settings.set_visible(is_enabled)
+
     def check_auto_maintenance(self) -> bool:
         """Periodic check for auto-maintenance conditions every 1 minute."""
         if self.is_cleaning_in_progress:
@@ -142,6 +150,7 @@ class MainWindow(Gtk.Window):
 
     def on_auto_maintenance_toggled(self, switch: Gtk.Switch, gparam: Any) -> None:
         self.settings_manager.set("auto_maintenance_enabled", switch.get_active())
+        self._update_settings_visibility()
 
     def on_frequency_changed(self, combo: Gtk.ComboBoxText) -> None:
         active_id = combo.get_active_id()
