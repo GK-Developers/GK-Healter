@@ -10,6 +10,7 @@ from src.cleaner import SystemCleaner
 from src.history_manager import HistoryManager
 from src.settings_manager import SettingsManager
 from src.auto_maintenance_manager import AutoMaintenanceManager
+from src.i18n_manager import _, I18nManager
 import datetime
 
 class MainWindow(Gtk.Window):
@@ -70,6 +71,27 @@ class MainWindow(Gtk.Window):
         self.lbl_last_maintenance: Gtk.Label = builder.get_object("lbl_last_maintenance")
         self.btn_back: Gtk.Button = builder.get_object("btn_back")
         self.box_auto_settings: Gtk.Box = builder.get_object("box_auto_settings")
+        self.combo_language: Gtk.ComboBoxText = builder.get_object("combo_language")
+
+        # Translation labels (need IDs from UI file)
+        self.lbl_settings_language: Gtk.Label = builder.get_object("lbl_settings_language")
+        self.lbl_language_select: Gtk.Label = builder.get_object("lbl_language_select")
+        self.lbl_last_maintenance_title: Gtk.Label = builder.get_object("lbl_last_maintenance_title")
+        
+        # Other translated labels
+        self.lbl_settings_title: Gtk.Label = builder.get_object("lbl_settings_title")
+        self.lbl_auto_maintenance_title: Gtk.Label = builder.get_object("lbl_auto_maintenance_title")
+        self.lbl_auto_maintenance_desc: Gtk.Label = builder.get_object("lbl_auto_maintenance_desc")
+        self.lbl_scheduling_title: Gtk.Label = builder.get_object("lbl_scheduling_title")
+        self.lbl_frequency_title: Gtk.Label = builder.get_object("lbl_frequency_title")
+        self.lbl_conditions_title: Gtk.Label = builder.get_object("lbl_conditions_title")
+        self.lbl_idle_title: Gtk.Label = builder.get_object("lbl_idle_title")
+        self.lbl_minutes_suffix: Gtk.Label = builder.get_object("lbl_minutes_suffix")
+        self.lbl_ac_power_title: Gtk.Label = builder.get_object("lbl_ac_power_title")
+        self.lbl_notifications_title: Gtk.Label = builder.get_object("lbl_notifications_title")
+        self.lbl_notify_done_title: Gtk.Label = builder.get_object("lbl_notify_done_title")
+        self.expander_advanced: Gtk.Expander = builder.get_object("expander_advanced")
+        self.lbl_disk_threshold_title: Gtk.Label = builder.get_object("lbl_disk_threshold_title")
 
         # Get Dialogs
         self.about_dialog: Gtk.AboutDialog = builder.get_object("about_dialog")
@@ -89,6 +111,9 @@ class MainWindow(Gtk.Window):
         # Initial History Load
         self.populate_history()
 
+        # Translate UI
+        self._translate_ui()
+
         # Load Settings UI
         self._sync_settings_ui()
 
@@ -96,6 +121,82 @@ class MainWindow(Gtk.Window):
 
         # Check for auto maintenance after a short delay
         GLib.timeout_add(1000, self.check_auto_maintenance)
+
+    def _translate_ui(self) -> None:
+        """Updates all UI text elements using the translation manager."""
+        self.window.set_title(_("app_title"))
+        # self.header_bar.set_title(_("header_title")) # HeaderBar title is usually set via property
+        self.btn_about.set_label(_("btn_about"))
+        self.btn_settings.set_tooltip_text(_("tooltip_settings"))
+        
+        self.info_label.set_text(_("info_ready"))
+        
+        # Tabs
+        self.notebook.get_nth_page(0).get_parent().set_tab_label_text(self.notebook.get_nth_page(0), _("tab_clean"))
+        self.notebook.get_nth_page(1).get_parent().set_tab_label_text(self.notebook.get_nth_page(1), _("tab_history"))
+
+        # TreeViews
+        self.treeview.get_column(0).set_title(_("col_select"))
+        self.treeview.get_column(1).set_title(_("col_category"))
+        self.treeview.get_column(2).set_title(_("col_description"))
+        self.treeview.get_column(3).set_title(_("col_size"))
+        
+        self.history_treeview.get_column(0).set_title(_("col_date"))
+        self.history_treeview.get_column(1).set_title(_("col_category"))
+        self.history_treeview.get_column(2).set_title(_("col_size"))
+        self.history_treeview.get_column(3).set_title(_("col_status"))
+
+        # Main Buttons
+        self.btn_scan.set_label(_("btn_scan"))
+        self.btn_clean.set_label(_("btn_clean"))
+
+        # Settings Page
+        self.btn_back.set_tooltip_text(_("tooltip_back", "Geri Dön"))
+        # self.lbl_settings_title.set_text(_("settings_title")) # Need ID
+
+        # Language section labels are updated via sync_settings_ui or here
+        self.lbl_settings_language.set_text(_("settings_language"))
+        self.lbl_language_select.set_text(_("settings_language")) 
+        self.lbl_last_maintenance_title.set_text(_("settings_last_maintenance"))
+
+        self.lbl_settings_title.set_text(_("settings_title"))
+        self.lbl_auto_maintenance_title.set_text(_("settings_auto_maintenance"))
+        self.lbl_auto_maintenance_desc.set_text(_("settings_auto_desc"))
+        self.lbl_scheduling_title.set_text(_("settings_scheduling"))
+        self.lbl_frequency_title.set_text(_("settings_frequency"))
+        self.lbl_conditions_title.set_text(_("settings_conditions"))
+        self.lbl_idle_title.set_text(_("settings_idle"))
+        self.lbl_minutes_suffix.set_text(_("minutes_suffix", "dk"))
+        self.lbl_ac_power_title.set_text(_("settings_ac_power"))
+        self.lbl_notifications_title.set_text(_("settings_notifications"))
+        self.lbl_notify_done_title.set_text(_("settings_notify_done"))
+        if self.expander_advanced:
+            self.expander_advanced.set_label(_("advanced_options"))
+        self.lbl_disk_threshold_title.set_text(_("settings_disk_threshold"))
+
+        # Combo Frequency items (manual translation)
+        active_freq = self.combo_frequency.get_active_id()
+        self.combo_frequency.remove_all()
+        self.combo_frequency.append("7", _("freq_7"))
+        self.combo_frequency.append("30", _("freq_30"))
+        self.combo_frequency.append("180", _("freq_180"))
+        self.combo_frequency.append("365", _("freq_365"))
+        self.combo_frequency.set_active_id(active_freq)
+
+        # Sync combo items
+        self.combo_language.remove_all()
+        self.combo_language.append("auto", _("lang_auto"))
+        self.combo_language.append("tr", _("lang_tr"))
+        self.combo_language.append("en", _("lang_en"))
+        self.combo_language.set_active_id(self.settings_manager.get("language"))
+
+        # About Dialog
+        self.about_dialog.set_property("program_name", _("app_title"))
+        self.about_dialog.set_property("copyright", "© 2026 Mustafa Gökpınar")
+
+        # Confirm Dialog
+        self.clean_confirm_dialog.set_property("text", _("confirm_title"))
+        self.clean_confirm_dialog.set_title(_("confirm_title"))
 
     def _sync_settings_ui(self) -> None:
         """Syncs the settings UI with values from SettingsManager."""
@@ -114,8 +215,9 @@ class MainWindow(Gtk.Window):
         if last_date:
             self.lbl_last_maintenance.set_text(last_date)
         else:
-            self.lbl_last_maintenance.set_text("Hiç yapılmadı")
+            self.lbl_last_maintenance.set_text(_("never_run"))
 
+        self.combo_language.set_active_id(self.settings_manager.get("language"))
         self._update_settings_visibility()
 
     def _update_settings_visibility(self) -> None:
@@ -132,8 +234,8 @@ class MainWindow(Gtk.Window):
             print("Starting intelligence auto-maintenance...")
             res = self.auto_maintenance_manager.run_maintenance()
             if res and self.settings_manager.get("notify_on_completion"):
-                self.show_notification("Otomatik Bakım Tamamlandı", 
-                                     f"{res['freed']} alan temizlendi.")
+                self.show_notification(_("auto_maintenance_title"), 
+                                     _("auto_maintenance_finished_msg").format(res['freed']))
             self.populate_history()
             self._sync_settings_ui()
         
@@ -171,6 +273,19 @@ class MainWindow(Gtk.Window):
 
     def on_notify_toggled(self, switch: Gtk.Switch, gparam: Any) -> None:
         self.settings_manager.set("notify_on_completion", switch.get_active())
+
+    def on_language_changed(self, combo: Gtk.ComboBoxText) -> None:
+        active_id = combo.get_active_id()
+        if active_id and active_id != self.settings_manager.get("language"):
+            self.settings_manager.set("language", active_id)
+            # Re-load language in manager
+            I18nManager().load_language(active_id)
+            # Refresh UI
+            self._translate_ui()
+            # Notify user
+            self.info_bar.set_message_type(Gtk.MessageType.INFO)
+            self.info_label.set_text(_("msg_reboot_required"))
+            self.info_bar.show()
 
     def show_notification(self, title: str, message: str) -> None:
         """Displays a system notification."""
@@ -213,7 +328,7 @@ class MainWindow(Gtk.Window):
                 total_bytes += row[4]
         
         mb = total_bytes / (1024 * 1024)
-        self.summary_label.set_text(f"Toplam Kazanç: {mb:.2f} MB")
+        self.summary_label.set_text(_("summary_total").format(f"{mb:.2f}"))
         self.btn_clean.set_sensitive(total_bytes > 0)
 
     def on_scan_clicked(self, widget: Gtk.Button) -> None:
@@ -222,7 +337,7 @@ class MainWindow(Gtk.Window):
         """
         self.btn_scan.set_sensitive(False)
         self.store.clear()
-        self.info_label.set_text("Sistem taranıyor, lütfen bekleyin...")
+        self.info_label.set_text(_("info_scanning"))
         self.info_bar.set_message_type(Gtk.MessageType.INFO)
         
         # Start scanning in a separate thread to keep UI responsive
@@ -261,11 +376,11 @@ class MainWindow(Gtk.Window):
         if not results:
             self.info_bar.set_message_type(Gtk.MessageType.WARNING)
             self.status_icon.set_from_icon_name("dialog-warning-symbolic", Gtk.IconSize.BUTTON)
-            self.info_label.set_markup("<span weight='bold'>Temizlenecek öğe bulunamadı.</span>")
+            self.info_label.set_markup(f"<b>{_('info_no_items')}</b>")
         else:
             self.info_bar.set_message_type(Gtk.MessageType.INFO)
             self.status_icon.set_from_icon_name("dialog-information-symbolic", Gtk.IconSize.BUTTON)
-            self.info_label.set_markup("<span weight='bold'>Tarama tamamlandı.</span> Silinecek öğeleri seçin.")
+            self.info_label.set_markup(f"<b>{_('info_scan_completed')}</b>")
 
     def on_clean_clicked(self, widget: Gtk.Button) -> None:
         """
@@ -274,7 +389,7 @@ class MainWindow(Gtk.Window):
         if self.is_cleaning_in_progress:
             self.info_bar.set_message_type(Gtk.MessageType.WARNING)
             self.status_icon.set_from_icon_name("dialog-warning-symbolic", Gtk.IconSize.BUTTON)
-            self.info_label.set_markup("<span weight='bold'>Başka bir temizlik işlemi devam ediyor.</span>")
+            self.info_label.set_markup(f"<span weight='bold'>{_('msg_cleaning_in_progress')}</span>")
             return
 
         to_clean = []
@@ -288,12 +403,12 @@ class MainWindow(Gtk.Window):
         if not to_clean:
             self.info_bar.set_message_type(Gtk.MessageType.WARNING)
             self.status_icon.set_from_icon_name("dialog-warning-symbolic", Gtk.IconSize.BUTTON)
-            self.info_label.set_markup("<span weight='bold'>Temizlenecek öğe seçilmedi.</span>")
+            self.info_label.set_markup(f"<span weight='bold'>{_('msg_no_selection')}</span>")
             return
 
         # Update dialog text
         self.clean_confirm_dialog.format_secondary_text(
-            f"{len(to_clean)} kategori temizlenecek. Devam etmek istiyor musunuz?"
+            _("confirm_text").format(len(to_clean))
         )
         
         # Store current cleaning info for history logging
@@ -317,7 +432,7 @@ class MainWindow(Gtk.Window):
             self.is_cleaning_in_progress = True
             self.btn_clean.set_sensitive(False)
             self.btn_scan.set_sensitive(False)
-            self.info_label.set_text("Temizleniyor...")
+            self.info_label.set_text(_("info_cleaning"))
             self.info_bar.set_message_type(Gtk.MessageType.INFO)
             self.status_icon.set_from_icon_name("process-working-symbolic", Gtk.IconSize.BUTTON)
             
@@ -350,18 +465,18 @@ class MainWindow(Gtk.Window):
                 flags=0,
                 message_type=Gtk.MessageType.ERROR,
                 buttons=Gtk.ButtonsType.OK,
-                text="Bazı İşlemler Başarısız Oldu",
+                text=_("msg_error_title"),
             )
-            dialog.format_secondary_text(f"{fail_count} hata oluştu:\n\n{error_text}")
+            dialog.format_secondary_text(_("msg_errors_detail").format(fail_count, error_text))
             dialog.run()
             dialog.destroy()
-            self.info_label.set_markup(f"Temizlik tamamlandı ancak <span foreground='red'>{fail_count} hata</span> oluştu.")
-            status = "Kısmi" if success_count > 0 else "Başarısız"
+            self.info_label.set_markup(_("info_cleaning_failed_msg").format(fail_count))
+            status = _("status_partial") if success_count > 0 else _("status_failed")
         else:
             self.info_bar.set_message_type(Gtk.MessageType.INFO)
             self.status_icon.set_from_icon_name("emblem-ok-symbolic", Gtk.IconSize.BUTTON)
-            self.info_label.set_markup(f"<b>Sistem başarıyla temizlendi!</b> {success_count} işlem yapıldı.")
-            status = "Başarılı"
+            self.info_label.set_markup(f"<b>{_('info_cleaning_success')}</b> {success_count} {_('actions_done')}")
+            status = _("status_success")
 
         # Log to history
         if self.current_cleaning_info:

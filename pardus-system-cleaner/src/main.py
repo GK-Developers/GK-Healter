@@ -4,11 +4,16 @@ import gi
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk
 
+from src.settings_manager import SettingsManager
+from src.i18n_manager import I18nManager
 from src.ui import MainWindow
 
 def main():
+    # Initialize settings and i18n
+    settings = SettingsManager()
+    I18nManager(settings.get("language"))
+    
     app = MainWindow()
-    # app.connect("destroy", Gtk.main_quit) # Handled inside MainWindow now
     Gtk.main()
 
 if __name__ == "__main__":

@@ -18,7 +18,8 @@ class SettingsManager:
             "disk_threshold_enabled": False,
             "disk_threshold_percent": 90,
             "check_ac_power": True,
-            "notify_on_completion": False
+            "notify_on_completion": False,
+            "language": "auto"
         }
         self.settings = self.defaults.copy()
         self._load_settings()
