@@ -6,5 +6,13 @@ Architecture: all
 Maintainer: Pardus Developer <developer@pardus.org.tr>
 Depends: python3, python3-gi, gir1.2-gtk-3.0, policykit-1
 Description: Pardus System Cleaner
- A simple and safe system cleaning tool for Pardus Linux.
- Cleans apt cache, old logs, and user caches to free up disk space.
+ A lightweight and safe system cleaning utility designed for Pardus Linux.
+ .
+ This tool helps users recover disk space by cleaning:
+  * APT cache and package archives
+  * Old system logs and journals
+  * Application caches (browser, thumbnail, etc.)
+ .
+ It features a native GTK interface that integrates seamlessly with
+ the Pardus desktop environment, offering both manual and automatic
+ maintenance options.

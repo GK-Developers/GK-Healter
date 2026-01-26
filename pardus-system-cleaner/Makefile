@@ -1,41 +1,63 @@
-.PHONY: run build clean install test
+.PHONY: run clean build deb
 
+# Configuration
+APP_NAME = pardus-system-cleaner
+VERSION = 0.1.0
 PYTHON = python3
-MAIN = src/main.py
+MAIN_SCRIPT = src/main.py
 
+# Paths
+DESTDIR ?= dist
+PREFIX ?= /usr
+BINDIR ?= $(PREFIX)/bin
+DATADIR ?= $(PREFIX)/share
+APPDIR ?= $(DATADIR)/$(APP_NAME)
+APPS_DIR ?= $(DATADIR)/applications
+ICON_DIR ?= $(DATADIR)/icons/hicolor/scalable/apps
+
+# Development
 run:
-	@echo "Starting Pardus System Cleaner in DEV mode..."
-	export PYTHONPATH=.:$PYTHONPATH && $(PYTHON) $(MAIN)
-
-build:
-	@echo "Building Debian package..."
-	# Create staging area
-	mkdir -p dist/DEBIAN
-	mkdir -p dist/usr/share/pardus-system-cleaner/src
-	mkdir -p dist/usr/share/pardus-system-cleaner/resources
-	mkdir -p dist/usr/bin
-	mkdir -p dist/usr/share/applications
-	mkdir -p dist/usr/share/icons/hicolor/scalable/apps
-	
-	# Copy files
-	cp debian/control dist/DEBIAN/
-	cp -r src/* dist/usr/share/pardus-system-cleaner/src/
-	cp -r resources/* dist/usr/share/pardus-system-cleaner/resources/
-	cp bin/pardus-system-cleaner dist/usr/bin/
-	cp pardus-system-cleaner.desktop dist/usr/share/applications/
-	# Using a system icon for now, could be replaced with a custom one
-	chmod +x dist/usr/bin/pardus-system-cleaner
-	
-	# Build
-	dpkg-deb --build dist pardus-system-cleaner.deb
-	@echo "Package built: pardus-system-cleaner.deb"
+	@echo "Starting $(APP_NAME) in DEV mode..."
+	export PYTHONPATH=.:$$PYTHONPATH && $(PYTHON) $(MAIN_SCRIPT)
 
 clean:
 	@echo "Cleaning up..."
 	find . -name "*.pyc" -delete
 	find . -name "__pycache__" -delete
-	rm -f *.deb
 	rm -rf dist
+	rm -f *.deb
 
-test:
-	$(PYTHON) -m unittest discover src
+# Packaging
+deb: clean
+	@echo "Building Debian package..."
+	
+	# 1. Create directory structure
+	mkdir -p $(DESTDIR)/DEBIAN
+	mkdir -p $(DESTDIR)$(APPDIR)/src
+	mkdir -p $(DESTDIR)$(APPDIR)/resources
+	mkdir -p $(DESTDIR)$(BINDIR)
+	mkdir -p $(DESTDIR)$(APPS_DIR)
+	
+	# 2. Copy application files
+	cp -r src/* $(DESTDIR)$(APPDIR)/src/
+	cp -r resources/* $(DESTDIR)$(APPDIR)/resources/
+	
+	# 3. Copy launcher and desktop file
+	cp bin/$(APP_NAME) $(DESTDIR)$(BINDIR)/
+	cp $(APP_NAME).desktop $(DESTDIR)$(APPS_DIR)/
+	
+	# 4. Copy Control files
+	cp debian/control $(DESTDIR)/DEBIAN/
+	cp debian/postinst $(DESTDIR)/DEBIAN/
+	cp debian/prerm $(DESTDIR)/DEBIAN/
+	
+	# 5. Set Permissions
+	chmod 755 $(DESTDIR)/DEBIAN/postinst
+	chmod 755 $(DESTDIR)/DEBIAN/prerm
+	chmod 755 $(DESTDIR)$(BINDIR)/$(APP_NAME)
+	find $(DESTDIR)$(APPDIR) -type f -exec chmod 644 {} \;
+	find $(DESTDIR)$(APPDIR) -type d -exec chmod 755 {} \;
+	
+	# 6. Build .deb
+	dpkg-deb --build $(DESTDIR) $(APP_NAME)_$(VERSION)_all.deb
+	@echo "Package built successfully: $(APP_NAME)_$(VERSION)_all.deb"
