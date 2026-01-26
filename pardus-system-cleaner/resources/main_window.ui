@@ -36,7 +36,6 @@
     <property name="title" translatable="yes">Pardus Sistem Temizlik Aracı</property>
     <property name="default_width">900</property>
     <property name="default_height">650</property>
-    <property name="border_width">10</property>
     <child type="titlebar">
       <object class="GtkHeaderBar">
         <property name="visible">True</property>
@@ -86,7 +85,7 @@
           <object class="GtkBox">
             <property name="visible">True</property>
             <property name="orientation">vertical</property>
-            <property name="spacing">10</property>
+            <property name="spacing">0</property>
             
             <child>
               <object class="GtkInfoBar" id="info_bar">
@@ -96,6 +95,7 @@
                 <child internal-child="content_area">
                   <object class="GtkBox">
                     <property name="spacing">16</property>
+                    <property name="margin">10</property>
                     <child>
                       <object class="GtkLabel" id="info_label">
                         <property name="visible">True</property>
@@ -106,11 +106,16 @@
                   </object>
                 </child>
               </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+              </packing>
             </child>
 
             <child>
               <object class="GtkNotebook" id="notebook">
                 <property name="visible">True</property>
+                <property name="margin">10</property>
                 <child>
                   <object class="GtkBox">
                     <property name="visible">True</property>
@@ -121,7 +126,7 @@
                       <object class="GtkScrolledWindow">
                         <property name="visible">True</property>
                         <property name="shadow_type">in</property>
-                        <property name="min_content_height">350</property>
+                        <property name="min_content_height">400</property>
                         <child>
                           <object class="GtkTreeView" id="treeview">
                             <property name="visible">True</property>
@@ -177,6 +182,7 @@
                       </object>
                       <packing>
                         <property name="expand">True</property>
+                        <property name="fill">True</property>
                       </packing>
                     </child>
                     <child>
@@ -184,6 +190,7 @@
                         <property name="visible">True</property>
                         <property name="label">Toplam Kazanç: 0 MB</property>
                         <property name="halign">end</property>
+                        <property name="margin_top">5</property>
                       </object>
                     </child>
                     <child>
@@ -191,6 +198,7 @@
                         <property name="visible">True</property>
                         <property name="spacing">10</property>
                         <property name="halign">end</property>
+                        <property name="margin_top">10</property>
                         <child>
                           <object class="GtkButton" id="btn_scan">
                             <property name="label">Sistemi Tara</property>
@@ -280,6 +288,7 @@
                       </object>
                       <packing>
                         <property name="expand">True</property>
+                        <property name="fill">True</property>
                       </packing>
                     </child>
                   </object>
@@ -294,6 +303,10 @@
                   </object>
                 </child>
               </object>
+              <packing>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
+              </packing>
             </child>
           </object>
           <packing>
@@ -306,14 +319,14 @@
           <object class="GtkBox">
             <property name="visible">True</property>
             <property name="orientation">vertical</property>
-            <property name="spacing">20</property>
-            <property name="margin">20</property>
+            <property name="spacing">0</property>
             
-            <!-- Navigation Header -->
+            <!-- Header Area -->
             <child>
               <object class="GtkBox">
                 <property name="visible">True</property>
                 <property name="spacing">15</property>
+                <property name="margin">20</property>
                 <child>
                   <object class="GtkButton" id="btn_back">
                     <property name="visible">True</property>
@@ -338,159 +351,15 @@
                   </object>
                 </child>
               </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+              </packing>
             </child>
 
             <child>
               <object class="GtkSeparator">
                 <property name="visible">True</property>
-              </object>
-            </child>
-
-            <!-- Settings List -->
-            <child>
-              <object class="GtkListBox">
-                <property name="visible">True</property>
-                <property name="selection_mode">none</property>
-                
-                <!-- Category Section: General -->
-                <child>
-                  <object class="GtkListBoxRow">
-                    <property name="visible">True</property>
-                    <property name="activatable">False</property>
-                    <child>
-                      <object class="GtkBox">
-                        <property name="visible">True</property>
-                        <property name="margin">12</property>
-                        <property name="spacing">20</property>
-                        <child>
-                          <object class="GtkBox">
-                            <property name="visible">True</property>
-                            <property name="orientation">vertical</property>
-                            <child>
-                              <object class="GtkLabel">
-                                <property name="visible">True</property>
-                                <property name="label" translatable="yes">Güvenli Otomatik Bakım</property>
-                                <property name="xalign">0</property>
-                                <attributes>
-                                  <attribute name="weight" value="bold"/>
-                                </attributes>
-                              </object>
-                            </child>
-                            <child>
-                              <object class="GtkLabel">
-                                <property name="visible">True</property>
-                                <property name="label" translatable="yes">Sistemi düzenli aralıklarla tarar ve güvenli temizlik için onay ister. Bu işlem sistem yapılandırmanızı değiştirmez.</property>
-                                <property name="xalign">0</property>
-                                <property name="wrap">True</property>
-                                <attributes>
-                                  <attribute name="scale" value="0.9"/>
-                                </attributes>
-                              </object>
-                            </child>
-                          </object>
-                          <packing>
-                            <property name="expand">True</property>
-                          </packing>
-                        </child>
-                        <child>
-                          <object class="GtkSwitch" id="switch_auto_maintenance">
-                            <property name="visible">True</property>
-                            <property name="valign">center</property>
-                            <signal name="notify::active" handler="on_auto_maintenance_toggled" swapped="no"/>
-                          </object>
-                        </child>
-                      </object>
-                    </child>
-                  </object>
-                </child>
-
-                <child>
-                  <object class="GtkListBoxRow">
-                    <property name="visible">True</property>
-                    <property name="activatable">False</property>
-                    <child>
-                      <object class="GtkBox">
-                        <property name="visible">True</property>
-                        <property name="margin">12</property>
-                        <property name="spacing">20</property>
-                        <child>
-                          <object class="GtkBox">
-                            <property name="visible">True</property>
-                            <property name="orientation">vertical</property>
-                            <child>
-                              <object class="GtkLabel">
-                                <property name="visible">True</property>
-                                <property name="label" translatable="yes">Bakım Sıklığı</property>
-                                <property name="xalign">0</property>
-                                <attributes>
-                                  <attribute name="weight" value="bold"/>
-                                </attributes>
-                              </object>
-                            </child>
-                            <child>
-                              <object class="GtkLabel">
-                                <property name="visible">True</property>
-                                <property name="label" translatable="yes">Otomatik bakımın ne sıklıkla çalışacağını Pardus standartlarına göre belirleyin.</property>
-                                <property name="xalign">0</property>
-                                <attributes>
-                                  <attribute name="scale" value="0.9"/>
-                                </attributes>
-                              </object>
-                            </child>
-                          </object>
-                          <packing>
-                            <property name="expand">True</property>
-                          </packing>
-                        </child>
-                        <child>
-                          <object class="GtkComboBoxText" id="combo_frequency">
-                            <property name="visible">True</property>
-                            <property name="valign">center</property>
-                            <items>
-                              <item id="7" translatable="yes">1 Haftada Bir</item>
-                              <item id="30" translatable="yes">1 Ayda Bir</item>
-                              <item id="180" translatable="yes">6 Ayda Bir</item>
-                              <item id="365" translatable="yes">1 Yılda Bir</item>
-                            </items>
-                            <signal name="changed" handler="on_frequency_changed" swapped="no"/>
-                          </object>
-                        </child>
-                      </object>
-                    </child>
-                  </object>
-                </child>
-
-                <child>
-                  <object class="GtkListBoxRow">
-                    <property name="visible">True</property>
-                    <property name="activatable">False</property>
-                    <child>
-                      <object class="GtkBox">
-                        <property name="visible">True</property>
-                        <property name="margin">12</property>
-                        <child>
-                          <object class="GtkLabel">
-                            <property name="visible">True</property>
-                            <property name="label" translatable="yes">Son Bakım Durumu:</property>
-                            <attributes>
-                              <attribute name="weight" value="bold"/>
-                            </attributes>
-                          </object>
-                          <packing>
-                            <property name="expand">False</property>
-                          </packing>
-                        </child>
-                        <child>
-                          <object class="GtkLabel" id="lbl_last_maintenance">
-                            <property name="visible">True</property>
-                            <property name="label">Hiç yapılmadı</property>
-                            <property name="margin_left">10</property>
-                          </object>
-                        </child>
-                      </object>
-                    </child>
-                  </object>
-                </child>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -498,16 +367,174 @@
               </packing>
             </child>
 
-            <!-- Spacer at the bottom to push everything up for desktop look -->
+            <!-- Settings Content -->
             <child>
               <object class="GtkBox">
                 <property name="visible">True</property>
+                <property name="orientation">vertical</property>
+                <property name="margin">20</property>
+                <property name="spacing">10</property>
+                <child>
+                  <object class="GtkFrame">
+                    <property name="visible">True</property>
+                    <property name="shadow_type">in</property>
+                    <child>
+                      <object class="GtkListBox">
+                        <property name="visible">True</property>
+                        <property name="selection_mode">none</property>
+                        
+                        <!-- Category Section: General -->
+                        <child>
+                          <object class="GtkListBoxRow">
+                            <property name="visible">True</property>
+                            <property name="activatable">False</property>
+                            <child>
+                              <object class="GtkBox">
+                                <property name="visible">True</property>
+                                <property name="margin">12</property>
+                                <property name="spacing">20</property>
+                                <child>
+                                  <object class="GtkBox">
+                                    <property name="visible">True</property>
+                                    <property name="orientation">vertical</property>
+                                    <child>
+                                      <object class="GtkLabel">
+                                        <property name="visible">True</property>
+                                        <property name="label" translatable="yes">Güvenli Otomatik Bakım</property>
+                                        <property name="xalign">0</property>
+                                        <attributes>
+                                          <attribute name="weight" value="bold"/>
+                                        </attributes>
+                                      </object>
+                                    </child>
+                                    <child>
+                                      <object class="GtkLabel">
+                                        <property name="visible">True</property>
+                                        <property name="label" translatable="yes">Sistemi düzenli aralıklarla tarar ve güvenli temizlik için onay ister. Bu işlem sistem yapılandırmanızı değiştirmez.</property>
+                                        <property name="xalign">0</property>
+                                        <property name="wrap">True</property>
+                                        <attributes>
+                                          <attribute name="scale" value="0.9"/>
+                                        </attributes>
+                                      </object>
+                                    </child>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">True</property>
+                                    <property name="fill">True</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkSwitch" id="switch_auto_maintenance">
+                                    <property name="visible">True</property>
+                                    <property name="valign">center</property>
+                                    <signal name="notify::active" handler="on_auto_maintenance_toggled" swapped="no"/>
+                                  </object>
+                                </child>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
+
+                        <child>
+                          <object class="GtkListBoxRow">
+                            <property name="visible">True</property>
+                            <property name="activatable">False</property>
+                            <child>
+                              <object class="GtkBox">
+                                <property name="visible">True</property>
+                                <property name="margin">12</property>
+                                <property name="spacing">20</property>
+                                <child>
+                                  <object class="GtkBox">
+                                    <property name="visible">True</property>
+                                    <property name="orientation">vertical</property>
+                                    <child>
+                                      <object class="GtkLabel">
+                                        <property name="visible">True</property>
+                                        <property name="label" translatable="yes">Bakım Sıklığı</property>
+                                        <property name="xalign">0</property>
+                                        <attributes>
+                                          <attribute name="weight" value="bold"/>
+                                        </attributes>
+                                      </object>
+                                    </child>
+                                    <child>
+                                      <object class="GtkLabel">
+                                        <property name="visible">True</property>
+                                        <property name="label" translatable="yes">Otomatik bakımın ne sıklıkla çalışacağını Pardus standartlarına göre belirleyin.</property>
+                                        <property name="xalign">0</property>
+                                        <attributes>
+                                          <attribute name="scale" value="0.9"/>
+                                        </attributes>
+                                      </object>
+                                    </child>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">True</property>
+                                    <property name="fill">True</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkComboBoxText" id="combo_frequency">
+                                    <property name="visible">True</property>
+                                    <property name="valign">center</property>
+                                    <items>
+                                      <item id="7" translatable="yes">1 Haftada Bir</item>
+                                      <item id="30" translatable="yes">1 Ayda Bir</item>
+                                      <item id="180" translatable="yes">6 Ayda Bir</item>
+                                      <item id="365" translatable="yes">1 Yılda Bir</item>
+                                    </items>
+                                    <signal name="changed" handler="on_frequency_changed" swapped="no"/>
+                                  </object>
+                                </child>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
+
+                        <child>
+                          <object class="GtkListBoxRow">
+                            <property name="visible">True</property>
+                            <property name="activatable">False</property>
+                            <child>
+                              <object class="GtkBox">
+                                <property name="visible">True</property>
+                                <property name="margin">12</property>
+                                <child>
+                                  <object class="GtkLabel">
+                                    <property name="visible">True</property>
+                                    <property name="label" translatable="yes">Son Bakım Durumu:</property>
+                                    <attributes>
+                                      <attribute name="weight" value="bold"/>
+                                    </attributes>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">True</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkLabel" id="lbl_last_maintenance">
+                                    <property name="visible">True</property>
+                                    <property name="label">Hiç yapılmadı</property>
+                                    <property name="margin_left">10</property>
+                                  </object>
+                                </child>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
               </object>
               <packing>
                 <property name="expand">True</property>
+                <property name="fill">True</property>
               </packing>
             </child>
-
           </object>
           <packing>
             <property name="name">page_settings</property>
