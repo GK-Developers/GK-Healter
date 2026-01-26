@@ -13,7 +13,7 @@ class SettingsManager:
         self.defaults = {
             "auto_maintenance_enabled": False,
             "last_maintenance_date": None,
-            "maintenance_frequency_days": 30 # Fixed at 30 days as per requirements
+            "maintenance_frequency_days": 30
         }
         self.settings = self.defaults.copy()
         self._load_settings()

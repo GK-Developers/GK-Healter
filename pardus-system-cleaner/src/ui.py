@@ -40,6 +40,7 @@ class MainWindow(Gtk.Window):
         self.window.connect("destroy", Gtk.main_quit)
         
         # Get Objects
+        self.main_stack: Gtk.Stack = builder.get_object("main_stack")
         self.info_bar: Gtk.InfoBar = builder.get_object("info_bar")
         self.info_label: Gtk.Label = builder.get_object("info_label")
         self.treeview: Gtk.TreeView = builder.get_object("treeview")
@@ -56,9 +57,10 @@ class MainWindow(Gtk.Window):
         self.btn_settings: Gtk.Button = builder.get_object("btn_settings")
 
         # Settings Objects
-        self.settings_dialog: Gtk.Dialog = builder.get_object("settings_dialog")
         self.switch_auto_maintenance: Gtk.Switch = builder.get_object("switch_auto_maintenance")
+        self.combo_frequency: Gtk.ComboBoxText = builder.get_object("combo_frequency")
         self.lbl_last_maintenance: Gtk.Label = builder.get_object("lbl_last_maintenance")
+        self.btn_back: Gtk.Button = builder.get_object("btn_back")
 
         # Get Dialogs
         self.about_dialog: Gtk.AboutDialog = builder.get_object("about_dialog")
@@ -87,8 +89,12 @@ class MainWindow(Gtk.Window):
         GLib.timeout_add(1000, self.check_auto_maintenance)
 
     def _sync_settings_ui(self) -> None:
-        """Syncs the settings dialog with values from SettingsManager."""
+        """Syncs the settings UI with values from SettingsManager."""
         self.switch_auto_maintenance.set_active(self.settings_manager.get("auto_maintenance_enabled"))
+        
+        freq = self.settings_manager.get("maintenance_frequency_days")
+        self.combo_frequency.set_active_id(str(freq))
+        
         last_date = self.settings_manager.get("last_maintenance_date")
         if last_date:
             self.lbl_last_maintenance.set_text(last_date)
@@ -160,13 +166,18 @@ class MainWindow(Gtk.Window):
 
     def on_settings_clicked(self, widget: Gtk.Button) -> None:
         self._sync_settings_ui()
-        self.settings_dialog.show_all()
+        self.main_stack.set_visible_child_name("page_settings")
 
-    def on_settings_close_clicked(self, widget: Gtk.Button) -> None:
-        self.settings_dialog.hide()
+    def on_back_clicked(self, widget: Gtk.Button) -> None:
+        self.main_stack.set_visible_child_name("page_main")
 
     def on_auto_maintenance_toggled(self, switch: Gtk.Switch, gparam: Any) -> None:
         self.settings_manager.set("auto_maintenance_enabled", switch.get_active())
+
+    def on_frequency_changed(self, combo: Gtk.ComboBoxText) -> None:
+        active_id = combo.get_active_id()
+        if active_id:
+            self.settings_manager.set("maintenance_frequency_days", int(active_id))
 
     def populate_history(self) -> None:
         """
