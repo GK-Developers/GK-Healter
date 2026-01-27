@@ -1,3 +1,0 @@
-#!/bin/sh
-export PYTHONPATH=/usr/share/pardus-system-cleaner
-exec python3 /usr/share/pardus-system-cleaner/src/main.py "$@"

@@ -15,7 +15,7 @@ import datetime
 
 class MainWindow(Gtk.Window):
     """
-    Main application window for the Pardus System Cleaner.
+    Main application window for the Zerra System Cleaner.
     Handles UI events, signal connections, and interacts with the SystemCleaner logic.
     """
     def __init__(self) -> None:
@@ -44,7 +44,7 @@ class MainWindow(Gtk.Window):
         
         # Set Application Icon
         try:
-            icon_path = os.path.join(os.path.dirname(__file__), "../resources/pardus-system-cleaner.png")
+            icon_path = os.path.join(os.path.dirname(__file__), "../resources/zerra-system-cleaner.png")
             if os.path.exists(icon_path):
                 self.window.set_icon_from_file(icon_path)
         except Exception as e:

@@ -1,0 +1,3 @@
+#!/bin/sh
+export PYTHONPATH=/usr/share/zerra-system-cleaner
+exec python3 /usr/share/zerra-system-cleaner/src/main.py "$@"
