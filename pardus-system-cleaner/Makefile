@@ -37,6 +37,7 @@ deb: clean
 	mkdir -p $(DESTDIR)$(APPDIR)/resources
 	mkdir -p $(DESTDIR)$(BINDIR)
 	mkdir -p $(DESTDIR)$(APPS_DIR)
+	mkdir -p $(DESTDIR)$(DATADIR)/pixmaps
 	
 	# 2. Copy application files
 	cp -r src/* $(DESTDIR)$(APPDIR)/src/
@@ -45,6 +46,7 @@ deb: clean
 	# 3. Copy launcher and desktop file
 	cp bin/$(APP_NAME) $(DESTDIR)$(BINDIR)/
 	cp $(APP_NAME).desktop $(DESTDIR)$(APPS_DIR)/
+	cp resources/pardus-system-cleaner.png $(DESTDIR)$(DATADIR)/pixmaps/
 	
 	# 4. Copy Control files
 	cp debian/control $(DESTDIR)/DEBIAN/

@@ -2,7 +2,7 @@
 Name=Sistem Temizleyici
 Comment=Sisteminizi gereksiz dosyalardan temizleyin
 Exec=pardus-system-cleaner
-Icon=system-file-manager
+Icon=pardus-system-cleaner
 Terminal=false
 Type=Application
 Categories=System;Settings;

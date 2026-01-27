@@ -41,6 +41,15 @@ class MainWindow(Gtk.Window):
 
         # Get Main Window
         self.window: Gtk.Window = builder.get_object("main_window")
+        
+        # Set Application Icon
+        try:
+            icon_path = os.path.join(os.path.dirname(__file__), "../resources/pardus-system-cleaner.png")
+            if os.path.exists(icon_path):
+                self.window.set_icon_from_file(icon_path)
+        except Exception as e:
+            print(f"Error setting icon: {e}")
+
         self.window.connect("destroy", Gtk.main_quit)
         
         # Get Objects
