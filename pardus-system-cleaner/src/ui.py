@@ -126,7 +126,7 @@ class MainWindow(Gtk.Window):
         """Updates all UI text elements using the translation manager."""
         self.window.set_title(_("app_title"))
         # self.header_bar.set_title(_("header_title")) # HeaderBar title is usually set via property
-        self.btn_about.set_label(_("btn_about"))
+        self.btn_about.set_tooltip_text(_("btn_about"))
         self.btn_settings.set_tooltip_text(_("tooltip_settings"))
         
         self.info_label.set_text(_("info_ready"))

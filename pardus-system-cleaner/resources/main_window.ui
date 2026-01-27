@@ -44,11 +44,17 @@
         <property name="show_close_button">True</property>
         <child>
           <object class="GtkButton" id="btn_about">
-            <property name="label" translatable="yes">Hakkında</property>
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <property name="receives_default">True</property>
+            <property name="tooltip_text" translatable="yes">Hakkında</property>
             <signal name="clicked" handler="on_about_clicked" swapped="no"/>
+            <child>
+              <object class="GtkImage">
+                <property name="visible">True</property>
+                <property name="icon_name">view-more-symbolic</property>
+              </object>
+            </child>
           </object>
           <packing>
             <property name="pack_type">start</property>
@@ -803,11 +809,10 @@
   </object>
 
   <object class="GtkAboutDialog" id="about_dialog">
-    <property name="program_name">Pardus Sistem Temizlik Aracı</property>
+    <property name="program_name">Sistem Temizlik Aracı</property>
     <property name="version">1.0</property>
-    <property name="copyright">© 2026 Pardus Topluluğu</property>
-    <property name="authors">Mustafa GÖKPINAR
-Pardus Geliştirici Ekibi</property>
+    <property name="copyright">© 2026 Topluluğu</property>
+    <property name="authors">Mustafa GÖKPINAR</property>
     <property name="logo_icon_name">system-file-manager</property>
     <property name="transient_for">main_window</property>
   </object>
