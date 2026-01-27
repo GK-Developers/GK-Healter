@@ -3,20 +3,26 @@ import shutil
 import subprocess
 from src.utils import get_size, format_size
 from typing import List, Dict, Any, Tuple
+from src.i18n_manager import _
 
 class SystemCleaner:
     def __init__(self):
         self.scan_results = []
         # Categories to scan
         # (Name, Path, IsSystem, Description)
+        # Note: We store keys here, but we will translate them when needed or just here if dynamic update is not needed immediately. 
+        # However, to be dynamic on language switch, we should probably translate in scan() or property if the class is long lived. 
+        # But for now, let's translate them at initialization or during scan traversal.
+        # Ideally, cleaner is instantiated, and if language changes, we might need to re-instantiate or re-fetch.
+        # Let's use the keys in the tuple, and translate in `scan`.
         self.categories = [
-            ("Apt Önbelleği", "/var/cache/apt/archives", True, "İndirilmiş paket dosyaları"),
-            ("Arşivlenmiş ve Sistem Günlükleri", "/var/log", True, "Eski günlüklerin silinmesi ve aktif günlüklerin boşaltılması."),
-            ("Gereksiz Bağımlılıklar", "/usr/bin/apt", True, "Kullanılmayan sistem paketleri (autoremove)"),
-            ("Sistem Hata Dökümleri", "/var/lib/systemd/coredump", True, "Uygulama çökme kayıtları"),
-            ("Küçük Resim Önbelleği", os.path.expanduser("~/.cache/thumbnails"), False, "Dosya yöneticisi önizlemeleri"),
-            ("Mozilla Önbelleği", os.path.expanduser("~/.cache/mozilla"), False, "Firefox tarayıcı önbelleği"),
-            ("Chrome Önbelleği", os.path.expanduser("~/.cache/google-chrome"), False, "Chrome tarayıcı önbelleği")
+            ("cat_apt_cache", "/var/cache/apt/archives", True, "desc_apt_cache"),
+            ("cat_sys_logs", "/var/log", True, "desc_sys_logs"),
+            ("cat_autoremove", "/usr/bin/apt", True, "desc_autoremove"),
+            ("cat_coredumps", "/var/lib/systemd/coredump", True, "desc_coredumps"),
+            ("cat_thumbnails", os.path.expanduser("~/.cache/thumbnails"), False, "desc_thumbnails"),
+            ("cat_firefox", os.path.expanduser("~/.cache/mozilla"), False, "desc_firefox"),
+            ("cat_chrome", os.path.expanduser("~/.cache/google-chrome"), False, "desc_chrome")
         ]
 
     def scan(self) -> List[Dict[str, Any]]:
@@ -31,12 +37,12 @@ class SystemCleaner:
                 # Only offer to clean if size > 0 (or some threshold) to reduce noise
                 if size_bytes > 0:
                     results.append({
-                        'category': name,
+                        'category': _(name),
                         'path': path,
                         'size_str': format_size(size_bytes),
                         'size_bytes': size_bytes,
                         'system': is_system,
-                        'desc': desc
+                        'desc': _(desc)
                     })
         self.scan_results = results
         return results
@@ -85,7 +91,7 @@ class SystemCleaner:
             is_system = item['system']
 
             if not self.is_safe_to_delete(path):
-                msg = f"GÜVENLİK UYARISI: {path} silinemez (izin verilmeyen yol)."
+                msg = _("msg_safety_warning").format(path)
                 print(msg)
                 errors.append(msg)
                 fail_count += 1
@@ -121,10 +127,10 @@ class SystemCleaner:
                         try:
                             os.remove(os.path.join(root, f))
                         except Exception as e:
-                            return False, f"Dosya silinemedi {f}: {e}"
+                            return False, _("err_file_delete").format(f, e)
             return True, None
         except Exception as e:
-            msg = f"Kullanıcı temizliği başarısız ({path}): {e}"
+            msg = _("err_user_clean_fail").format(path, e)
             print(msg)
             return False, msg
 
@@ -148,7 +154,7 @@ class SystemCleaner:
         elif path == "/var/lib/systemd/coredump":
             cmd = ["pkexec", "sh", "-c", "rm -rf /var/lib/systemd/coredump/*"]
         else:
-            return False, f"Bilinmeyen sistem yolu: {path}"
+            return False, _("err_unknown_sys_path").format(path)
 
         try:
             print(f"Executing system clean: {cmd}")
@@ -157,10 +163,10 @@ class SystemCleaner:
         except subprocess.CalledProcessError as e:
             # e.returncode 126 or 127 or 1 usually means auth failed or cancelled
             if e.returncode in [126, 127]:
-                return False, f"Yetkilendirme iptal edildi veya reddedildi: {path}"
-            return False, f"Sistem temizliği hata kodu {e.returncode}: {path}"
+                return False, _("err_auth_cancelled").format(path)
+            return False, _("err_sys_clean_code").format(e.returncode, path)
         except Exception as e:
-            return False, f"Beklenmeyen hata ({path}): {e}"
+            return False, _("err_unexpected").format(path, e)
 
 
 

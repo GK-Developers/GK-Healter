@@ -1,10 +1,10 @@
 [Desktop Entry]
-Name=Pardus Sistem Temizleyici
+Name=Sistem Temizleyici
 Comment=Sisteminizi gereksiz dosyalardan temizleyin
 Exec=pardus-system-cleaner
 Icon=system-file-manager
 Terminal=false
 Type=Application
 Categories=System;Settings;
-Keywords=cleaner;system;clean;temizlik;pardus;
+Keywords=cleaner;system;clean;temizlik;
 StartupNotify=true
