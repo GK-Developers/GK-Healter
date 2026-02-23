@@ -79,22 +79,7 @@ class MainWindow:
         self.window: Gtk.Window = builder.get_object("main_window")
         
         # Set Application Icon (works for both Flatpak and system install)
-        try:
-            # Try themed icon first (Flatpak uses this)
-            icon_theme = Gtk.IconTheme.get_default()
-            if icon_theme.has_icon("io.github.gkdevelopers.GKHealter"):
-                self.window.set_icon_name("io.github.gkdevelopers.GKHealter")
-            else:
-                # Fallback to local file
-                svg_icon_path = os.path.join(os.path.dirname(__file__), "../resources/gk-healter.svg")
-                png_icon_path = os.path.join(os.path.dirname(__file__), "../resources/gk-healter.png")
-                
-                if os.path.exists(svg_icon_path):
-                    self.window.set_icon_from_file(svg_icon_path)
-                elif os.path.exists(png_icon_path):
-                    self.window.set_icon_from_file(png_icon_path)
-        except Exception as e:
-            print(f"Error setting icon: {e}")
+        self._set_app_icon()
 
         self.window.connect("destroy", Gtk.main_quit)
         
@@ -463,23 +448,21 @@ class MainWindow:
             icon_theme = Gtk.IconTheme.get_default()
             if icon_theme.has_icon("io.github.gkdevelopers.GKHealter"):
                 self.window.set_icon_name("io.github.gkdevelopers.GKHealter")
-            else:
-                # Try loading SVG first (scalable), then fallback to PNG
-                icon_path_svg = os.path.join(
-                    os.path.dirname(__file__), "..", "icons",
-                    "hicolor", "scalable", "apps",
-                    "io.github.gkdevelopers.GKHealter.svg",
-                )
-                if os.path.exists(icon_path_svg):
-                    self.window.set_icon_from_file(icon_path_svg)
-                else:
-                    icon_path_png = os.path.join(
-                        os.path.dirname(__file__), "..", "icons",
-                        "hicolor", "128x128", "apps",
-                        "io.github.gkdevelopers.GKHealter.png",
-                    )
-                    if os.path.exists(icon_path_png):
-                        self.window.set_icon_from_file(icon_path_png)
+                return
+
+            # Fallback: try well-known icon paths
+            candidates = [
+                # System icon path (/usr/share/icons/hicolor)
+                "/usr/share/icons/hicolor/scalable/apps/io.github.gkdevelopers.GKHealter.svg",
+                "/usr/share/icons/hicolor/128x128/apps/io.github.gkdevelopers.GKHealter.png",
+                # Bundled resources (relative to src/)
+                os.path.join(os.path.dirname(__file__), "..", "resources", "gk-healter.svg"),
+                os.path.join(os.path.dirname(__file__), "..", "resources", "gk-healter.png"),
+            ]
+            for path in candidates:
+                if os.path.exists(path):
+                    self.window.set_icon_from_file(path)
+                    return
         except Exception:
             pass
 

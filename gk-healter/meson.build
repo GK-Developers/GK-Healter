@@ -73,6 +73,12 @@ install_data(
   install_dir: join_paths(pkgdatadir, 'resources'),
 )
 
+install_data(
+  'resources/gk-healter.svg',
+  'resources/gk-healter.png',
+  install_dir: join_paths(pkgdatadir, 'resources'),
+)
+
 # ── Polkit policy ────────────────────────────────────────────────────────────
 install_data(
   join_paths('data', app_id + '.policy'),

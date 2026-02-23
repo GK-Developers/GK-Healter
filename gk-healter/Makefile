@@ -38,6 +38,8 @@ install:
 	install -m 644 src/*.py  $(DESTDIR)$(APPDIR)/src/
 	install -m 644 src/locale/*.json $(DESTDIR)$(APPDIR)/src/locale/
 	install -m 644 resources/main_window.ui $(DESTDIR)$(APPDIR)/resources/
+	install -m 644 resources/gk-healter.svg $(DESTDIR)$(APPDIR)/resources/
+	install -m 644 resources/gk-healter.png $(DESTDIR)$(APPDIR)/resources/
 
 	# Launcher
 	install -d $(DESTDIR)$(BINDIR)
