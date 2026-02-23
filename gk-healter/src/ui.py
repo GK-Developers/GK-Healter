@@ -463,8 +463,8 @@ class MainWindow:
                 if os.path.exists(path):
                     self.window.set_icon_from_file(path)
                     return
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"Error setting icon: {e}")
 
     # ══════════════════════════════════════════════════════════════════════════
     #  SIGNAL HANDLERS  (names must match handler="" in XML)
