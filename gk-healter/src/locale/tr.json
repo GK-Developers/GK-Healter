@@ -123,6 +123,8 @@
     "settings_ai_provider": "Sağlayıcı",
     "settings_ai_api_key": "API Anahtarı",
     "settings_ai_model": "Model",
+    "settings_experimental": "Deneysel Seçenekler",
+    "settings_experimental_desc": "Yeni projeler ve özellikler burada yer alacak.",
 
     "settings_last_maintenance": "Son Bakım:",
     "lbl_never": "Hiçbir zaman",

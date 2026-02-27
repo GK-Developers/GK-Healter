@@ -2151,6 +2151,54 @@
                           </object>
                         </child>
 
+                        <!-- ── Experimental Options ───────────────────── -->
+                        <child>
+                          <object class="GtkBox">
+                            <property name="visible">True</property>
+                            <property name="orientation">vertical</property>
+                            <property name="spacing">8</property>
+                            <property name="margin_top">16</property>
+                            <child>
+                              <object class="GtkLabel" id="lbl_experimental_title">
+                                <property name="visible">True</property>
+                                <property name="label">Experimental Options</property>
+                                <property name="xalign">0</property>
+                                <attributes>
+                                  <attribute name="weight" value="bold"/>
+                                </attributes>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="GtkListBox" id="list_experimental">
+                                <property name="visible">True</property>
+                                <property name="selection_mode">none</property>
+                                <child>
+                                  <object class="GtkListBoxRow">
+                                    <property name="visible">True</property>
+                                    <property name="activatable">False</property>
+                                    <child>
+                                      <object class="GtkBox">
+                                        <property name="visible">True</property>
+                                        <property name="margin">12</property>
+                                        <child>
+                                          <object class="GtkLabel" id="lbl_experimental_desc">
+                                            <property name="visible">True</property>
+                                            <property name="label">New features and projects will appear here.</property>
+                                            <property name="xalign">0</property>
+                                            <style>
+                                              <class name="dim-label"/>
+                                            </style>
+                                          </object>
+                                        </child>
+                                      </object>
+                                    </child>
+                                  </object>
+                                </child>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
+
                       </object>
                     </child>
                   </object>

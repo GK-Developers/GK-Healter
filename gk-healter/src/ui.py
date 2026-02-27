@@ -310,6 +310,9 @@ class MainWindow:
         self.lbl_last_maintenance_title: Gtk.Label = g("lbl_last_maintenance_title")
         self.lbl_last_maintenance: Gtk.Label = g("lbl_last_maintenance")
 
+        self.lbl_experimental_title: Gtk.Label = g("lbl_experimental_title")
+        self.lbl_experimental_desc: Gtk.Label = g("lbl_experimental_desc")
+
         # ── Security page ──
         self.lbl_security_page_title: Gtk.Label = g("lbl_security_page_title")
         self.lbl_security_summary: Gtk.Label = g("lbl_security_summary")
@@ -447,6 +450,10 @@ class MainWindow:
         self.lbl_ai_provider.set_text(_("settings_ai_provider"))
         self.lbl_ai_api_key.set_text(_("settings_ai_api_key"))
         self.lbl_ai_model.set_text(_("settings_ai_model"))
+
+        # ── Experimental ──
+        self.lbl_experimental_title.set_text(_("settings_experimental"))
+        self.lbl_experimental_desc.set_text(_("settings_experimental_desc"))
 
     # ── CSS ──────────────────────────────────────────────────────────────────
     @staticmethod
