@@ -128,7 +128,7 @@ ls -la /workspace/artifacts
 - `artifacts/` klasöründen örnek senaryo raporları (en az 2–3 adet HTML + manifest)
 - Uygulama arayüz ekran görüntüleri (`screenshots/` altındaki görseller)
 
-Not: Docker imajının `*.tar` dışa aktarılan hali (offline taşınabilir artefact) boyut olarak büyük olabildiği için repoya eklenmemiştir; ihtiyaç halinde talep ekinde ayrıca paylaşılabilir veya releases sayfasından indirilebilir.
+Not: Docker imajının `*.tar` dışa aktarılan hali (offline taşınabilir artefact) boyut olarak büyük olabildiği için repoya eklenmemiştir; ihtiyaç halinde talep ekinde ayrıca paylaşılabilir veya releases sayfasından indirilebilir https://github.com/GK-Developers/gk-healter/releases/download/v0.1.7-pre/gk-healter-test_pardus25.tar.
 
 ---
 
