@@ -12,7 +12,7 @@
 
 **GK Healter** is a professional system maintenance and health-monitoring utility designed primarily for **Pardus** and Debian-based Linux distributions. It emphasizes safety and efficiency, providing users with reliable disk space recovery, error detection, and proactive maintenance capabilities without compromising system stability.
 
-> 🏆 Developed for **TEKNOFEST 2026 — Pardus Bug Catching and Suggestion Competition** (Development Category).
+> 🏆 Developed for **TEKNOFEST 2026 — Pardus Bug Catching and Suggestion Competitæion** (Development Category).
 
 Developed by **Egehan KAHRAMAN** and **Mustafa GÖKPINAR** — **GK Developers**.
 
@@ -217,9 +217,17 @@ summary of one full run lives at `GKHealter_DockerSecurityEvaluation_2026-03-11.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and contribution guidelines.
 
-## License
+### 📄 License
 
-This project is licensed under the **GNU General Public License v3**. See the [LICENSE](LICENSE) file for details.
+This project is licensed under the **GK DEV STUDIOS Custom License**.
+
+* **Individuals & Students:** Free for personal use, volunteers, and educational purposes.
+* **Corporate & Institutional:** A paid commercial license is **required** for companies, government agencies, and professional operational use.
+* **Contributors:** Free access is granted to those who contribute to the project.
+
+For commercial licensing inquiries and deployment permissions, please contact us at **gkdevstudio@gmail.com** or visit **[gkdevstudios.com](https://gkdevstudios.com)**.
+
+See the [LICENSE](LICENSE.md) file for the full legal text.
 
 ## Project Links
 
